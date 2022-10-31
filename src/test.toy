@@ -1,0 +1,3 @@
+x +=++y; // Comment
+// Another comment
+if (x != 10) return;
