@@ -1,7 +1,7 @@
 public class Leaf extends Node {
 
+    Token token;
     public Leaf(Token token) {
-        super(token);
+        this.token = token;
     }
-
 }

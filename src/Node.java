@@ -1,11 +1,5 @@
-public class Node {
-
-    public Token token;
-    public Node parent;
-
-    public Node(Token token) {
-        this.token = token;
-        parent = null;
-    }
-
+public abstract class Node {
+    // no token variable, as things like arguments don't have tokens
+    public boolean parens = false;
+    public boolean brackets = false;
 }

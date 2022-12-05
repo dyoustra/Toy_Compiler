@@ -32,348 +32,354 @@ public class Parser {
         this.index = 0;
     }
 
-    private boolean parseExpression() {
-        return disjunction() && expressionPrime();
+    private Node parseExpression() {
+        return expressionPrime(disjunction());
     }
 
-    private boolean disjunction() {
-        return conjunction() && disjunctionPrime();
+    private Node disjunction() {
+        return disjunctionPrime(conjunction());
     }
 
-    private boolean expressionPrime() {
+    private Node expressionPrime(Node left) {
         if (tokens.get(index).getType().equals(ToyScanner.State.EQUAL.name())) { // "="
-            index++; // optional
+            return new BinaryOperator(tokens.get(index), left, expressionPrime(disjunction()));
         }
-        int indexBefore = index;
-        if (disjunction()) return expressionPrime();
-        index = indexBefore;
-        return true; // can be null
+        else return left; // can be null
     }
 
-    private boolean conjunction() {
-        return relation() && conjunctionPrime();
+    private Node conjunction() {
+        return conjunctionPrime(relation());
     }
 
-    private boolean disjunctionPrime() {
-        if (orOp()) {
-            return conjunction() && disjunctionPrime();
+    private Node disjunctionPrime(Node left) {
+        BinaryOperator orOp = orOp();
+        if (orOp != null) {
+            orOp.left = left;
+            orOp.right = disjunctionPrime(conjunction());
+            return orOp;
         }
-        else return true; // can be null
+        else return left; // can be null
     }
 
-    private boolean relation() {
-        if (simpleExpression()) {
-            int indexBefore = index;
-            if (compareOp() && simpleExpression()) {
-                return true;
-            }
-            index = indexBefore;
-            return true;
+    private Node relation() {
+        return relationPrime(simpleExpression());
+    }
+
+    private Node relationPrime(Node left) {
+        BinaryOperator compareOp = compareOp();
+        if (compareOp != null) {
+            compareOp.left = left;
+            compareOp.right = simpleExpression();
+            return compareOp;
         }
-        return false;
+        else return left;
     }
-
-    private boolean conjunctionPrime() {
-        if (andOp()) {
-            return relation() && conjunctionPrime();
+    private Node conjunctionPrime(Node left) {
+        BinaryOperator andOp = andOp();
+        if (andOp != null) {
+            andOp.left = left;
+            andOp.right = conjunctionPrime(relation());
+            return andOp;
         }
-        else return true;
+        return left; // can be null
     }
 
-    private boolean simpleExpression() {
-        sign(); // optional, can be false but will not increment index
-        return term() && simpleExpressionPrime();
-    }
-
-    private boolean term() {
-        return factor() && termPrime();
-    }
-
-    private boolean simpleExpressionPrime() {
-        if (addOp()) {
-            return term() && simpleExpressionPrime();
+    private Node simpleExpression() {
+        UnaryOperator sign = sign();  // sign is optional
+        if (sign != null) {
+            sign.child = simpleExpressionPrime(term());
+            return sign;
         }
-        return true; // can be null
+        else return simpleExpressionPrime(term());
     }
 
-    private boolean factor() {
-        if (name()) return factorSuffix();
-        else if (unaryOp()) return factor();
-        else if (prefixOp()) return variable();
+    private Node term() {
+        return termPrime(factor());
+    }
+
+    private Node simpleExpressionPrime(Node left) {
+        BinaryOperator addOp = addOp();
+        if (addOp != null) {
+            addOp.left = left;
+            addOp.right = simpleExpressionPrime(term());
+            return addOp;
+        }
+        return left; // can be null
+    }
+
+    private Node factor() {
+        Name name = name();
+        if (name != null) return name; // need to add factorSuffix
+        Literal literal = literal();
+        if (literal() != null) return literal();
+        UnaryOperator unary = unaryOp();
+        if (unary != null) {
+            unary.child = factor();
+            return unary;
+        }
+        UnaryOperator prefix = prefixOp();
+        if (prefix != null) {
+            prefix.child = variable();
+            return prefix;
+        }
         else if (tokens.get(index).getType().equals(ToyScanner.State.LPAREN.name())) { // "("
             index++;
-            if (parseExpression()) {
+            Node expression = parseExpression();
+            if (expression != null) {
                 if (tokens.get(index).getType().equals(ToyScanner.State.RPAREN.name())) { // ")"
                     index++;
-                    return true;
+                    expression.parens = true;
+                    return expression;
                 }
             }
         }
-        return false;
+        return null;
     }
 
-    private boolean termPrime() {
-        if (mulOp()) {
-            return factor() && termPrime();
+    private Node termPrime(Node left) {
+        BinaryOperator mulOp = mulOp();
+        if (mulOp != null) {
+            mulOp.left = left;
+            mulOp.right = termPrime(factor());
+            return mulOp;
         }
-        return true; // can be null
+        return left; // can be null
     }
 
-    private boolean factorSuffix() {
+    private Node factorSuffix() {
         if (tokens.get(index).getType().equals(ToyScanner.State.LPAREN.name())) { // "("
             index++;
             int indexBefore = index;
-            if (!arguments()) {
+            Arguments arguments = arguments();
+            if (arguments.children.size() == 0) {
                 index = indexBefore;
                 // if true, then nothing happens but index is incremented to account for the arguments
             }
             if (tokens.get(index).getType().equals(ToyScanner.State.RPAREN.name())) { // ")"
                 index++;
-                return true;
-            } else return false;
+                arguments.parens = true;
+                return arguments;
+            } else return null;
         }
+
         else if (tokens.get(index).getType().equals(ToyScanner.State.LBRACKET.name())) { // "["
             index++;
-            if (parseExpression()) {
+            Node expression = parseExpression();
+            if (expression != null) {
                 if (tokens.get(index).getType().equals(ToyScanner.State.RBRACKET.name())) { // "]"
                     index++;
                     postfixOp(); // optional
-                    return true;
+                    expression.brackets = true;
+                    return expression;
                 }
             }
-            return false;
+            errorExpected(']');
+            return null;
         }
-        return true; // can be null
+        return null; // can be null
     }
 
-    private boolean variable() {
-        if (name()) {
+    private Node variable() {
+        Node name = name();
+        if (name != null) {
             if (tokens.get(index).getType().equals(ToyScanner.State.LBRACKET.name())) { // "["
                 index++;
-                if (parseExpression()) {
+                Node expression = parseExpression();
+                if (expression != null) {
                     if (tokens.get(index).getType().equals(ToyScanner.State.RBRACKET.name())) { // "]"
                         index++;
-                        return true;
+                        expression.brackets = true;
+                        return new Variable(name, expression);
                     }
                 }
-            } else {
-                return true;
-            }
+            } else return new Variable(name);
         }
-        return false;
+        return null;
     }
 
-    private boolean arguments() {
-        return parseExpression() && argumentsPrime();
+    private Arguments arguments() {
+        Arguments args = new Arguments();
+        args.children.add(parseExpression()); // argument = expression
+        return argumentsPrime(args);
     }
 
-    private boolean argumentsPrime() {
+    private Arguments argumentsPrime(Arguments args) {
         if (tokens.get(index).getType().equals(ToyScanner.State.COMMA.name())) { // ","
             index++;
-            return parseExpression() && argumentsPrime();
+            args.children.add(parseExpression()); // argument = expression
+            return argumentsPrime(args);
         }
-        return true; // can be null
+        return args; // can be null
     }
 
 
     // CHECK FOR TERMINAL METHODS -- WILL NOT INCREMENT INDEX ON FALSE
 
-    private boolean compareOp() {
-        if (tokens.get(index).getType().equals(ToyScanner.State.EQUAL.name())) { // "=="
-            index++;
-            return true;
-        }
-        else if (tokens.get(index).getType().equals(ToyScanner.State.EXCLAMATION.name())) { // "!="
-            index++;
-            return true;
-        }
-        else if (tokens.get(index).getType().equals(ToyScanner.State.LESSTHAN.name())) { // "<"
-            index++;
-            return true;
-        }
-        else if (tokens.get(index).getType().equals(ToyScanner.State.GREATERTHAN.name())) { // ">"
-            index++;
-            return true;
-        }
-        else if (tokens.get(index).getType().equals(ToyScanner.State.LESSEQUAL.name())) { // "<="
-            index++;
-            return true;
-        }
-        else if (tokens.get(index).getType().equals(ToyScanner.State.GREATEREQUAL.name())) { // ">="
-            index++;
-            return true;
-        }
-        return false;
+    private BinaryOperator compareOp() {
+        String type = tokens.get(index).getType();
+        if (type.equals(ToyScanner.State.EQUAL.name()) ||
+            type.equals(ToyScanner.State.EXCLAMATION.name()) ||
+            type.equals(ToyScanner.State.LESSTHAN.name()) ||
+            type.equals(ToyScanner.State.GREATERTHAN.name()) ||
+            type.equals(ToyScanner.State.LESSEQUAL.name()) ||
+            type.equals(ToyScanner.State.GREATEREQUAL.name())
+        ) { // "==", "!=", "<", ">", "<=", ">="
+            return new BinaryOperator(tokens.get(index++), null, null);
+        } else return null;
     }
 
-    private boolean assignOp() {
-        if (tokens.get(index).getType().equals(ToyScanner.State.EQUAL.name())) { // "="
-            index++;
-            return true;
+    private BinaryOperator assignOp() {
+        String type = tokens.get(index).getType();
+        if (tokens.get(index).getType().equals(ToyScanner.State.EQUAL.name()) ||
+            tokens.get(index).getType().equals(ToyScanner.State.PLUSEQUAL.name()) ||
+            tokens.get(index).getType().equals(ToyScanner.State.MINUSEQUAL.name()) ||
+            tokens.get(index).getType().equals(ToyScanner.State.STAREQUAL.name()) ||
+            tokens.get(index).getType().equals(ToyScanner.State.SLASHEQUAL.name()) ||
+            tokens.get(index).getType().equals(ToyScanner.State.PERCENTEQUAL.name()) ||
+            tokens.get(index).getType().equals(ToyScanner.State.AMPERSANDEQUAL.name()) ||
+            tokens.get(index).getType().equals(ToyScanner.State.CARETEQUAL.name()) ||
+            tokens.get(index).getType().equals(ToyScanner.State.PIPEEQUAL.name())
+        ) { // "=", "+=", "-=", "*=", "/=", "%=", "&=", "^=", "|="
+            return new BinaryOperator(tokens.get(index++), null, null);
         }
-        else if (tokens.get(index).getType().equals(ToyScanner.State.PLUSEQUAL.name())) { // "+="
-            index++;
-            return true;
-        }
-        else if (tokens.get(index).getType().equals(ToyScanner.State.MINUSEQUAL.name())) { // "-="
-            index++;
-            return true;
-        }
-        else if (tokens.get(index).getType().equals(ToyScanner.State.STAREQUAL.name())) { // "*="
-            index++;
-            return true;
-        }
-        else if (tokens.get(index).getType().equals(ToyScanner.State.SLASHEQUAL.name())) { // "/="
-            index++;
-            return true;
-        }
-        else if (tokens.get(index).getType().equals(ToyScanner.State.PERCENTEQUAL.name())) { // "%="
-            index++;
-            return true;
-        }
-        else if (tokens.get(index).getType().equals(ToyScanner.State.AMPERSANDEQUAL.name())) { // "&="
-            index++;
-            return true;
-        }
-        else if (tokens.get(index).getType().equals(ToyScanner.State.CARETEQUAL.name())) { // "^="
-            index++;
-            return true;
-        }
-        else if (tokens.get(index).getType().equals(ToyScanner.State.PIPEEQUAL.name())) { // "|="
-            index++;
-            return true;
-        }
-        return false;
+        else return null;
     }
 
-    private boolean unaryOp() {
+    private UnaryOperator unaryOp() {
         if (tokens.get(index).getType().equals(ToyScanner.State.EXCLAMATION.name())) { // "!"
-            index++;
-            return true;
+            return new UnaryOperator(tokens.get(index++), null);
         }
-        return false;
+        else return null;
     }
 
-    private boolean prefixOp() {
-        if (tokens.get(index).getType().equals(ToyScanner.State.PLUSPLUS.name())) { // "++"
-            index++;
-            return true;
+    private UnaryOperator prefixOp() {
+        String type = tokens.get(index).getType();
+        if (type.equals(ToyScanner.State.PLUSPLUS.name()) ||
+            type.equals(ToyScanner.State.MINUSMINUS.name())
+        ) { // "++", "--"
+            return new UnaryOperator(tokens.get(index++), null, true);
         }
-        else if (tokens.get(index).getType().equals(ToyScanner.State.MINUSMINUS.name())) { // "--"
-            index++;
-            return true;
-        }
-        return false;
+        else return null;
     }
 
-    private boolean postfixOp() {
-        return this.prefixOp();
+    private UnaryOperator postfixOp() {
+        String type = tokens.get(index).getType();
+        if (type.equals(ToyScanner.State.PLUSPLUS.name()) ||
+                type.equals(ToyScanner.State.MINUSMINUS.name())
+        ) { // "++", "--"
+            return new UnaryOperator(tokens.get(index++), null, false);
+        }
+        else return null;
     }
 
-    private boolean andOp() {
-        if (tokens.get(index).getType().equals(ToyScanner.State.AMPERSAND.name())) { // "&"
-            index++;
-            return true;
+    private BinaryOperator andOp() {
+        String type = tokens.get(index).getType();
+        if (type.equals(ToyScanner.State.AMPERSAND.name()) ||
+            type.equals(ToyScanner.State.AMPERSANDAMPERSAND.name())
+        ) { // "&", "&&"
+            return new BinaryOperator(tokens.get(index++), null, null);
         }
-        if (tokens.get(index).getType().equals(ToyScanner.State.AMPERSANDAMPERSAND.name())) { // "&&"
-            index++;
-            return true;
-        }
-        return false;
+        else return null;
     }
 
-    private boolean orOp() {
-        if (tokens.get(index).getType().equals(ToyScanner.State.PIPE.name())) { // "|"
-            index++;
-            return true;
+    private BinaryOperator orOp() {
+        String type = tokens.get(index).getType();
+        if (type.equals(ToyScanner.State.PIPE.name()) ||
+            type.equals(ToyScanner.State.PIPEPIPE.name()) ||
+            type.equals(ToyScanner.State.CARET.name())
+        ) { // "|", "||", "^"
+            return new BinaryOperator(tokens.get(index++), null, null);
         }
-        if (tokens.get(index).getType().equals(ToyScanner.State.PIPEPIPE.name())) { // "||"
-            index++;
-            return true;
-        }
-        if (tokens.get(index).getType().equals(ToyScanner.State.CARET.name())) { // "^"
-            index++;
-            return true;
-        }
-        return false;
+        else return null;
     }
 
-    private boolean mulOp() {
-        if (tokens.get(index).getType().equals(ToyScanner.State.STAR.name())) { // "*"
-            index++;
-            return true;
+    private BinaryOperator mulOp() {
+        String type = tokens.get(index).getType();
+        if (type.equals(ToyScanner.State.STAR.name()) ||
+            type.equals(ToyScanner.State.SLASH.name()) ||
+            type.equals(ToyScanner.State.PERCENT.name())
+        ) { // "*", "/", "%"
+            return new BinaryOperator(tokens.get(index++), null, null);
         }
-        else if (tokens.get(index).getType().equals(ToyScanner.State.SLASH.name())) { // "/"
-            index++;
-            return true;
-        }
-        else if (tokens.get(index).getType().equals(ToyScanner.State.PERCENT.name())) { // "%"
-            index++;
-            return true;
-        }
-        return false;
+        else return null;
     }
 
-    private boolean addOp() {
-        if (tokens.get(index).getType().equals(ToyScanner.State.PLUS.name())) { // "+"
-            index++;
-            return true;
+    private BinaryOperator addOp() {
+        String type = tokens.get(index).getType();
+        if (type.equals(ToyScanner.State.PLUS.name()) ||
+            type.equals(ToyScanner.State.MINUS.name())
+        ) { // "+", "-"
+            return new BinaryOperator(tokens.get(index++), null, null);
         }
-        else if (tokens.get(index).getType().equals(ToyScanner.State.MINUS.name())) { // "-"
-            index++;
-            return true;
-        }
-        return false;
+        else return null;
     }
 
-    private boolean sign() {
-        return addOp();
+    private UnaryOperator sign() {
+        String type = tokens.get(index).getType();
+        if (type.equals(ToyScanner.State.PLUS.name()) ||
+                type.equals(ToyScanner.State.MINUS.name())
+        ) { // "+", "-"
+            return new UnaryOperator(tokens.get(index++), null);
+        }
+        else return null;
     }
 
-    private boolean number() {
+    private Literal number() {
         if (tokens.get(index).getType().equals(Token.TokenType.NUMBER.name())) { // number
-            index++;
-            return true;
+            return new Literal(tokens.get(index++));
         }
-        return false;
+        return null;
     }
 
-    private boolean literal() {
-        if (number()) {
-            return true;
+    private Literal literal() {
+        Literal number = number();
+        if (number != null) return number;
+        String type = tokens.get(index).getType();
+        if (type.equals(Token.TokenType.STRING.name()) ||
+            type.equals(Token.TokenType.CHARACTER.name())
+        ) { // string, character
+            return new Literal(tokens.get(index++));
         }
-        else if (tokens.get(index).getType().equals(Token.TokenType.STRING.name())) { // string
-            index++;
-            return true;
-        }
-        else if (tokens.get(index).getType().equals(Token.TokenType.CHARACTER.name())) { // character
-            index++;
-            return true;
-        }
-        else if (tokens.get(index).getType().equals(Token.TokenType.IDENTIFIER.name())) { // check if it's a keyword
-            if (((Identifier) tokens.get(index)).getValue().equals("true") || ((Identifier) tokens.get(index)).getValue().equals("false")) {
-                index++;
-                return true;
+        else if (type.equals(Token.TokenType.IDENTIFIER.name())) { // check if it's a true | false keyword
+            if (((Identifier) tokens.get(index)).getValue().equals("true") ||
+                ((Identifier) tokens.get(index)).getValue().equals("false")) {
+                return new Literal(tokens.get(index++));
             }
-            return false;
         }
-        return false;
+        return null;
     }
 
-    private boolean name() {
+    private Node name() {
         if (tokens.get(index).getType().equals(Token.TokenType.IDENTIFIER.name())) { // identifier
-            index++;
-            return namePrime(); // always true
+            Name name = new Name(((Identifier) tokens.get(index++)).getValue());
+            name.value += namePrime().value;
+            return name;
         }
-        return false;
+        return null;
     }
 
-    private boolean namePrime() {
+    private Node namePrime(Node left) {
         if (tokens.get(index).getType().equals(ToyScanner.State.DOT.name())) { // "."
             index++;
-            return namePrime();
+            Dot dot = new Dot();
+            dot.left = left;
+            dot.right = namePrime();
         }
-        return true;
+        return new Name("");
+
+
+        if (mulOp != null) {
+            mulOp.left = left;
+            mulOp.right = termPrime(factor());
+            return mulOp;
+        }
+        return left; // can be null
+    }
+
+    // EXCEPTION METHODS
+
+    private void errorExpected(char c) {
+        throw new RuntimeException("Expected '" + c + "' at line " + (tokens.get(index).getRow() + 1) + ", column " + (tokens.get(index).getCol() + 1));
     }
 
     // MAIN
@@ -391,7 +397,7 @@ public class Parser {
                 if (token != null) tokens.add(token);
             }
             Parser parser = new Parser(tokens);
-            if (parser.parseExpression()) {
+            if (parser.parseExpression() != null) {
                 System.out.println("OK");
             } else {
                 System.out.println("ERROR" + " at row:" + ToyScanner.startRow + " col:" + parser.index);
