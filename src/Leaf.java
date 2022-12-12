@@ -1,4 +1,4 @@
-public class Leaf extends Node {
+public abstract class Leaf extends Node {
 
     Token token;
     public Leaf(Token token) {

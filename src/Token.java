@@ -9,6 +9,18 @@ public class Token {
         CHARACTER, NUMBER, STRING, IDENTIFIER, OPERATOR
     }
 
+    public enum Keywords {
+        PROGRAM,
+        IF,
+        ELSE,
+        WHILE,
+        RETURN,
+        INT,
+        CHAR,
+        BOOLEAN,
+        VOID
+    }
+
     private final String type;
 
     private final int row;

@@ -32,7 +32,199 @@ public class Parser {
         this.index = 0;
     }
 
-    private Node parseExpression() {
+    private Node program() {
+        expecting(Token.Keywords.PROGRAM.name());
+        expecting(Token.TokenType.IDENTIFIER.name());
+        return block();
+    }
+
+    private Node block() {
+        expecting(ToyScanner.State.LBRACE.name());
+        ArrayList<Node> statements = statements();
+        expecting(ToyScanner.State.RBRACE.name());
+        return new Block(statements);
+    }
+
+    private ArrayList<Node> statements() {
+        ArrayList<Node> statements = new ArrayList<>();
+        statements.add(statement());
+        statementsPrime(statements);
+        return statements;
+    }
+
+    private ArrayList<Node> statementsPrime(ArrayList<Node> statements) {
+        Node statement = statement();
+        while (statement != null) {
+            statements.add(statement);
+            statement = statement();
+        }
+        return statements;
+    }
+
+    private Node statement() {
+        Node declaration = declaration();
+        Node assignment = assignment();
+        Node ifStatement = ifStatement();
+        Node whileStatement = whileStatement();
+        Node returnStatement = returnStatement();
+        Node callStatement = callStatement();
+        Node block = block();
+        if (declaration != null) {
+            return declaration;
+        } else if (assignment != null) {
+            return assignment;
+        } else if (ifStatement != null) {
+            return ifStatement;
+        } else if (whileStatement != null) {
+            return whileStatement;
+        } else if (returnStatement != null) {
+            return returnStatement;
+        } else if (callStatement != null) {
+            return callStatement;
+        } else if (block != null) {
+            return block; // should block be an arraylist of nodes? if so, how does that fit into statement?
+        }
+        return null;
+    }
+
+    private Node declaration() {
+        Node varDec = variableDeclaration();
+        Node methDec = methodDeclaration();
+        if (varDec != null) {
+            expecting(ToyScanner.State.SEMICOLON.name());
+            return varDec;
+        } else if (methDec != null) {
+            expecting(ToyScanner.State.SEMICOLON.name());
+            return methDec;
+        }
+        return null;
+    }
+
+    private Node assignment() {
+        Node variable = variable();
+        BinaryOperator assignOp = assignOp();
+        assignOp.left = variable;
+        assignOp.right = expression();
+        expecting(ToyScanner.State.SEMICOLON.name());
+        return assignOp;
+    }
+
+    private Node ifStatement() {
+        expecting(Token.Keywords.IF.name());
+        expecting(ToyScanner.State.LPAREN.name());
+        Node condition = booleanExpression();
+        expecting(ToyScanner.State.RPAREN.name());
+        Node statement = statement();
+        if (optional(Token.Keywords.ELSE.name())) {
+            Node elseStatement = statement();
+            return new IfStatement(condition, statement, elseStatement);
+        }
+        else return new IfStatement(condition, statement);
+    }
+
+    private Node whileStatement() {
+        expecting(Token.Keywords.WHILE.name());
+        expecting(ToyScanner.State.LPAREN.name());
+        Node condition = booleanExpression();
+        expecting(ToyScanner.State.RPAREN.name());
+        Node body = statement();
+        return new WhileStatement(condition, body);
+    }
+
+    private Node returnStatement() {
+        expecting(Token.Keywords.RETURN.name());
+        Node expression = expression(); // can be null for empty return statement
+        expecting(ToyScanner.State.SEMICOLON.name());
+        return new ReturnStatement(expression);
+    }
+
+    private Node callStatement() {
+        Node call = call();
+        expecting(ToyScanner.State.SEMICOLON.name());
+        return call;
+    }
+
+    private Node call() {
+        Node name = name();
+        expecting(ToyScanner.State.LPAREN.name());
+        Arguments arguments = arguments();
+        expecting(ToyScanner.State.RPAREN.name());
+        return new CallStatement(name, arguments);
+    }
+
+    private Node variableDeclaration() {
+        Node type = variableType();
+        Literal name = new Literal(expecting(Token.TokenType.IDENTIFIER.name()));
+        if (optional(ToyScanner.State.EQUAL.name())) {
+            return new VariableDeclaration(type, name, expression());
+        } else {
+            return new VariableDeclaration(type, name); // variable declared but not initialized
+        }
+    }
+
+    private Node methodDeclaration() {
+        Node type = scalarType();
+        Literal name = new Literal(expecting(Token.TokenType.IDENTIFIER.name()));
+        expecting(ToyScanner.State.LPAREN.name());
+        ArrayList<Node> parameters = parameters(); // can be null
+        expecting(ToyScanner.State.RPAREN.name());
+        Node body = block();
+        return new MethodDeclaration(type, name, parameters, body);
+    }
+
+    private ArrayList<Node> parameters() { // there is no parametersPrime
+        ArrayList<Node> parameters = new ArrayList<>();
+        do {
+            parameters.add(parameter());
+        } while (optional(ToyScanner.State.COMMA.name()));
+        return parameters;
+    }
+
+    private Node parameter() {
+        Node type = parameterType();
+        Literal name = new Literal(expecting(Token.TokenType.IDENTIFIER.name()));
+        return new VariableDeclaration(type, name);
+    }
+
+    private Node variableType() {
+        Node scalarType = scalarType();
+        if (optional(ToyScanner.State.LBRACKET.name())) {
+            Node constantExpression = constantExpression();
+            expecting(ToyScanner.State.RBRACKET.name());
+            return new ArrayType(scalarType, constantExpression);
+        }
+        return scalarType;
+    }
+
+    private Node scalarType() {
+        if (optional(Token.Keywords.INT.name()) ||
+            optional(Token.Keywords.CHAR.name()) ||
+            optional(Token.Keywords.BOOLEAN.name()) ||
+            optional(Token.Keywords.VOID.name())
+        ) {
+            return new Type(tokens.get(index - 1));
+        }
+        return null;
+    }
+
+    private Node parameterType() {
+        Node scalarType = scalarType();
+        if (optional(ToyScanner.State.LBRACKET.name())) {
+            expecting(ToyScanner.State.RBRACKET.name());
+            return new ArrayType(scalarType, null);
+        }
+        return scalarType;
+    }
+
+    private Node booleanExpression() {
+        return expression();
+    }
+
+    private Node constantExpression() {
+        return expression();
+    }
+
+    private Node expression() {
         return expressionPrime(disjunction());
     }
 
@@ -108,10 +300,10 @@ public class Parser {
     }
 
     private Node factor() {
-        Name name = name();
-        if (name != null) return name; // need to add factorSuffix
-        Literal literal = literal();
-        if (literal() != null) return literal();
+        Node name = name();
+        if (name != null) return name; // TODO need to add factorSuffix
+        Node primary = primary(); // TODO wrong, switch to primary() (check grammar)
+        if (primary != null) return primary;
         UnaryOperator unary = unaryOp();
         if (unary != null) {
             unary.child = factor();
@@ -124,7 +316,7 @@ public class Parser {
         }
         else if (tokens.get(index).getType().equals(ToyScanner.State.LPAREN.name())) { // "("
             index++;
-            Node expression = parseExpression();
+            Node expression = expression();
             if (expression != null) {
                 if (tokens.get(index).getType().equals(ToyScanner.State.RPAREN.name())) { // ")"
                     index++;
@@ -134,6 +326,16 @@ public class Parser {
             }
         }
         return null;
+    }
+
+    private Node primary() {
+        Node callStatement = callStatement();
+        if (callStatement != null) return callStatement;
+        Node literal = literal();
+        if (literal != null) return literal;
+        Node variable = variable();
+        if (variable != null) return variable;
+        return null; // no expression case, as this is checked in factor()
     }
 
     private Node termPrime(Node left) {
@@ -164,7 +366,7 @@ public class Parser {
 
         else if (tokens.get(index).getType().equals(ToyScanner.State.LBRACKET.name())) { // "["
             index++;
-            Node expression = parseExpression();
+            Node expression = expression();
             if (expression != null) {
                 if (tokens.get(index).getType().equals(ToyScanner.State.RBRACKET.name())) { // "]"
                     index++;
@@ -172,9 +374,8 @@ public class Parser {
                     expression.brackets = true;
                     return expression;
                 }
+                throw new ErrorExpected("]", tokens.get(index));
             }
-            errorExpected(']');
-            return null;
         }
         return null; // can be null
     }
@@ -184,7 +385,7 @@ public class Parser {
         if (name != null) {
             if (tokens.get(index).getType().equals(ToyScanner.State.LBRACKET.name())) { // "["
                 index++;
-                Node expression = parseExpression();
+                Node expression = expression();
                 if (expression != null) {
                     if (tokens.get(index).getType().equals(ToyScanner.State.RBRACKET.name())) { // "]"
                         index++;
@@ -199,14 +400,14 @@ public class Parser {
 
     private Arguments arguments() {
         Arguments args = new Arguments();
-        args.children.add(parseExpression()); // argument = expression
+        args.children.add(expression()); // argument = expression
         return argumentsPrime(args);
     }
 
     private Arguments argumentsPrime(Arguments args) {
         if (tokens.get(index).getType().equals(ToyScanner.State.COMMA.name())) { // ","
             index++;
-            args.children.add(parseExpression()); // argument = expression
+            args.children.add(expression()); // argument = expression
             return argumentsPrime(args);
         }
         return args; // can be null
@@ -351,42 +552,50 @@ public class Parser {
 
     private Node name() {
         if (tokens.get(index).getType().equals(Token.TokenType.IDENTIFIER.name())) { // identifier
-            Name name = new Name(((Identifier) tokens.get(index++)).getValue());
-            name.value += namePrime().value;
-            return name;
+            Literal name = new Literal(tokens.get(index++));
+            return namePrime(name);
         }
         return null;
     }
 
-    private Node namePrime(Node left) {
+    private Node namePrime(Literal left) {
         if (tokens.get(index).getType().equals(ToyScanner.State.DOT.name())) { // "."
             index++;
             Dot dot = new Dot();
             dot.left = left;
-            dot.right = namePrime();
+            dot.right = namePrime(new Literal(tokens.get(index++)));
+            return dot;
         }
-        return new Name("");
-
-
-        if (mulOp != null) {
-            mulOp.left = left;
-            mulOp.right = termPrime(factor());
-            return mulOp;
-        }
-        return left; // can be null
+        return left;
     }
 
     // EXCEPTION METHODS
 
-    private void errorExpected(char c) {
-        throw new RuntimeException("Expected '" + c + "' at line " + (tokens.get(index).getRow() + 1) + ", column " + (tokens.get(index).getCol() + 1));
+    private Token expecting(String expected) {
+        if (tokens.get(index).getType().equals(expected)) {
+            return tokens.get(index++);
+        } else throw new ErrorExpected(expected, tokens.get(index));
+    }
+
+    private boolean optional(String optional) {
+        if (tokens.get(index).getType().equals(optional)) {
+            index++;
+            return true;
+        }
+        return false;
+    }
+
+    private static class ErrorExpected extends RuntimeException {
+        public ErrorExpected(String expected, Token found) {
+            super("Expected " + expected + "' at line " + (found.getRow() + 1) + ", column " + (found.getCol() + 1) + ", found " + found);
+        }
     }
 
     // MAIN
 
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
-        System.out.println("Enter expression: ");
+        System.out.println("Enter program: ");
         if (scanner.hasNextLine()) System.out.println();
         Token token = null;
         ArrayList<Token> tokens = new ArrayList<>();
@@ -397,10 +606,11 @@ public class Parser {
                 if (token != null) tokens.add(token);
             }
             Parser parser = new Parser(tokens);
-            if (parser.parseExpression() != null) {
+            if (parser.program() != null) {
                 System.out.println("OK");
             } else {
-                System.out.println("ERROR" + " at row:" + ToyScanner.startRow + " col:" + parser.index);
+//                System.out.println("ERROR" + " at row:" + ToyScanner.startRow + " col:" + parser.index);
+                System.out.println("NO");
             }
             ToyScanner.startCol = 0;
             ToyScanner.startRow++;

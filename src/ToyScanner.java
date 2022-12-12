@@ -648,15 +648,15 @@ public class ToyScanner {
         if (prevFinalState.type == null) return null;
         return switch (prevFinalState.type) {
             case IDENTIFIER -> switch (strValue.toString()) {
-                case "program" -> new Token("PROGRAM", row, startOfTokenCol);
-                case "if" -> new Token("IF", row, startOfTokenCol);
-                case "else" -> new Token("ELSE", row, startOfTokenCol);
-                case "while" -> new Token("WHILE", row, startOfTokenCol);
-                case "return" -> new Token("RETURN", row, startOfTokenCol);
-                case "int" -> new Token("INT", row, startOfTokenCol);
-                case "char" -> new Token("CHAR", row, startOfTokenCol);
-                case "boolean" -> new Token("BOOLEAN", row, startOfTokenCol);
-                case "void" -> new Token("VOID", row, startOfTokenCol);
+                case "program" -> new Token(Token.Keywords.PROGRAM.name(), row, startOfTokenCol);
+                case "if" -> new Token(Token.Keywords.IF.name(), row, startOfTokenCol);
+                case "else" -> new Token(Token.Keywords.ELSE.name(), row, startOfTokenCol);
+                case "while" -> new Token(Token.Keywords.WHILE.name(), row, startOfTokenCol);
+                case "return" -> new Token(Token.Keywords.RETURN.name(), row, startOfTokenCol);
+                case "int" -> new Token(Token.Keywords.INT.name(), row, startOfTokenCol);
+                case "char" -> new Token(Token.Keywords.CHAR.name(), row, startOfTokenCol);
+                case "boolean" -> new Token(Token.Keywords.BOOLEAN.name(), row, startOfTokenCol);
+                case "void" -> new Token(Token.Keywords.VOID.name(), row, startOfTokenCol);
                 default -> new Identifier(strValue.toString(), row, startOfTokenCol);
             };
             case NUMBER -> new NumericLiteral(numValue, row, startOfTokenCol);
