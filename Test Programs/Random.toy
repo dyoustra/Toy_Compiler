@@ -6,7 +6,7 @@ program Random {
 	int M = 32707;
 
 	int random() {
-		return seed = ((K * seed + C) % M)
+		return seed = ((K * seed + C) % M);
 	}
 
 	void print(int n) {

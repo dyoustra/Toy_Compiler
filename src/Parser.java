@@ -96,15 +96,28 @@ public class Parser {
     }
 
     private Node declaration() { // good
-        Node varDec = variableDeclaration();
-        if (varDec != null) {
-            expecting(ToyScanner.State.SEMICOLON.name());
-            return varDec;
-        }
-        Node methDec = methodDeclaration();
-        if (methDec != null) {
-            expecting(ToyScanner.State.SEMICOLON.name());
-            return methDec;
+        Node type = variableType();
+        if (type != null) {
+            Literal name = new Literal(expecting(Token.TokenType.IDENTIFIER.name()));
+            if (optional(ToyScanner.State.LPAREN.name())) { // method declaration
+                if (type instanceof ArrayType) {
+                    throw new RuntimeException("Cannot declare a method with an array type");
+                }
+                ArrayList<Node> parameters = parameters(); // can be null
+                expecting(ToyScanner.State.RPAREN.name());
+                Node body = block();
+//                expecting(ToyScanner.State.SEMICOLON.name()); should there be a semicolon after a method declaration?
+                return new MethodDeclaration(type, name, parameters, body);
+            }
+            else { // variable declaration
+                if (optional(ToyScanner.State.EQUAL.name())) {
+                    Node expression = expression();
+                    expecting(ToyScanner.State.SEMICOLON.name());
+                    return new VariableDeclaration(type, name, expression);
+                } else {
+                    return new VariableDeclaration(type, name); // variable declared but not initialized
+                }
+            }
         }
         return null;
     }
@@ -179,32 +192,6 @@ public class Parser {
         else return null;
     }
 
-    private Node variableDeclaration() { // good
-        Node type = variableType();
-        if (type != null) {
-            Literal name = new Literal(expecting(Token.TokenType.IDENTIFIER.name()));
-            if (optional(ToyScanner.State.EQUAL.name())) {
-                return new VariableDeclaration(type, name, expression());
-            } else {
-                return new VariableDeclaration(type, name); // variable declared but not initialized
-            }
-        }
-        return null;
-    }
-
-    private Node methodDeclaration() { // good
-        Node type = scalarType();
-        if (type != null) {
-            Literal name = new Literal(expecting(Token.TokenType.IDENTIFIER.name()));
-            expecting(ToyScanner.State.LPAREN.name());
-            ArrayList<Node> parameters = parameters(); // can be null
-            expecting(ToyScanner.State.RPAREN.name());
-            Node body = block();
-            return new MethodDeclaration(type, name, parameters, body);
-        }
-        return null;
-    }
-
     private ArrayList<Node> parameters() { // there is no parametersPrime
         ArrayList<Node> parameters = new ArrayList<>();
         do {
@@ -223,7 +210,7 @@ public class Parser {
     }
 
     private Node variableType() {
-        Node scalarType = scalarType();
+        Type scalarType = scalarType();
         if (optional(ToyScanner.State.LBRACKET.name())) {
             Node constantExpression = constantExpression();
             expecting(ToyScanner.State.RBRACKET.name());
@@ -232,7 +219,7 @@ public class Parser {
         return scalarType;
     }
 
-    private Node scalarType() {
+    private Type scalarType() {
         if (optional(Token.Keywords.INT.name()) ||
             optional(Token.Keywords.CHAR.name()) ||
             optional(Token.Keywords.BOOLEAN.name()) ||
@@ -244,7 +231,7 @@ public class Parser {
     }
 
     private Node parameterType() {
-        Node scalarType = scalarType();
+        Type scalarType = scalarType();
         if (optional(ToyScanner.State.LBRACKET.name())) {
             expecting(ToyScanner.State.RBRACKET.name());
             return new ArrayType(scalarType, null);
@@ -270,7 +257,7 @@ public class Parser {
 
     private Node expressionPrime(Node left) {
         if (tokens.get(index).getType().equals(ToyScanner.State.EQUAL.name())) { // "="
-            return new BinaryOperator(tokens.get(index), left, expressionPrime(disjunction()));
+            return new BinaryOperator(tokens.get(index++), left, expressionPrime(disjunction()));
         }
         else return left; // can be null
     }
@@ -336,10 +323,12 @@ public class Parser {
     }
 
     private Node factor() {
-        Node name = name();
-        if (name != null) return name;
-        Node primary = primary();
-        if (primary != null) return primary;
+//        Node name = name();
+//        if (name != null) return name;
+        Node primary = primary(); // checks for (expression)
+        if (primary != null){
+            return primary;
+        }
         UnaryOperator unary = unaryOp();
         if (unary != null) {
             unary.child = factor();
@@ -360,12 +349,24 @@ public class Parser {
     }
 
     private Node primary() {
-        Node callStatement = callStatement();
-        if (callStatement != null) return callStatement;
-        Node literal = literal();
+        Node literal = literal(); // this must go before callStatement to avoid "true" or "false" being treated as a name (because they are identifiers)
         if (literal != null) return literal;
+        int initialIndex = index;
         Node variable = variable();
-        if (variable != null) return variable;
+        if (variable != null) {
+            if (optional(ToyScanner.State.LPAREN.name())) { // "("
+                index = initialIndex; // needed because both variable and callstatement start with name
+            }
+            else {
+                UnaryOperator postfix = postfixOp();
+                if (postfix != null) {
+                    postfix.child = variable;
+                    return postfix;
+                } else return variable;
+            }
+        }
+        Node call = call();
+        if (call != null) return call;
         if (optional(ToyScanner.State.LPAREN.name())) { // "("
             Node expression = expression();
             expecting(ToyScanner.State.RPAREN.name()); // ")"
@@ -450,7 +451,7 @@ public class Parser {
 
     private BinaryOperator compareOp() {
         String type = tokens.get(index).getType();
-        if (type.equals(ToyScanner.State.EQUAL.name()) ||
+        if (type.equals(ToyScanner.State.EQUALEQUAL.name()) ||
             type.equals(ToyScanner.State.EXCLAMATION.name()) ||
             type.equals(ToyScanner.State.LESSTHAN.name()) ||
             type.equals(ToyScanner.State.GREATERTHAN.name()) ||
@@ -639,7 +640,10 @@ public class Parser {
             }
             ToyScanner.startCol = 0;
             ToyScanner.startRow++;
+//            System.out.println(tokens.size());
+//            System.out.println(tokens.get(tokens.size() - 1));
         }
+        System.out.println("done scanning");
         Parser parser = new Parser(tokens);
         Node root = parser.program();
         if (root != null) {
@@ -648,6 +652,6 @@ public class Parser {
 //            System.out.println("ERROR" + " at row:" + ToyScanner.startRow + " col:" + parser.index);
             System.out.println("NO");
         }
-        System.out.println("certified bruh moment");
+//        System.out.println("certified bruh moment");
     }
 }

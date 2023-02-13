@@ -3,7 +3,7 @@ program Echo {
     // A program to copy standard input to standard output
 
     char newLine = '\n';
-    bool done = false;
+    boolean done = false;
 
     while (!done) {
         char c = input();
