@@ -3,6 +3,9 @@
 // Homework #4
 // 10/24/22
 
+import SymbolTables.SymbolTable;
+import SymbolTables.Variable;
+
 import java.util.ArrayList;
 import java.util.Scanner;
 
@@ -27,6 +30,8 @@ public class Parser {
     private TokenArrayList tokens;
     private int index;
 
+    private SymbolTable currentSymbolTable;
+
     public Parser(ArrayList<Token> tokens) {
         this.tokens = new TokenArrayList(tokens);
         this.index = 0;
@@ -34,14 +39,22 @@ public class Parser {
 
     private Node program() { // good
         expecting(Token.Keywords.PROGRAM.name());
-        expecting(Token.TokenType.IDENTIFIER.name());
-        return block();
+        Identifier name = (Identifier) expecting(Token.TokenType.IDENTIFIER.name());
+        return block(name.getValue());
     }
 
-    private Node block() {
+    private Node block(String name) { // good
         if (optional(ToyScanner.State.LBRACE.name())) {
+            // create new symbol table
+            if (currentSymbolTable == null) {
+                currentSymbolTable = new SymbolTable(name, null);
+            } else {
+                currentSymbolTable = new SymbolTable(name, currentSymbolTable);
+            }
             ArrayList<Node> statements = statements();
             expecting(ToyScanner.State.RBRACE.name()); // good
+            currentSymbolTable.print();
+            currentSymbolTable = currentSymbolTable.getParent();
             return new Block(statements);
         }
         return null;
@@ -88,7 +101,7 @@ public class Parser {
         if (callStatement != null) {
             return callStatement;
         }
-        Node block = block();
+        Node block = block(null);
         if (block != null) {
             return block;
         }
@@ -105,8 +118,7 @@ public class Parser {
                 }
                 ArrayList<Node> parameters = parameters(); // can be null
                 expecting(ToyScanner.State.RPAREN.name());
-                Node body = block();
-//                expecting(ToyScanner.State.SEMICOLON.name()); should there be a semicolon after a method declaration?
+                Node body = block(((Identifier) name.token).getValue());
                 return new MethodDeclaration(type, name, parameters, body);
             }
             else { // variable declaration
@@ -116,6 +128,12 @@ public class Parser {
                     return new VariableDeclaration(type, name, expression);
                 } else {
                     return new VariableDeclaration(type, name); // variable declared but not initialized
+                }
+                // put new variable in symbol table
+                if (type instanceof ArrayType) {
+                    currentSymbolTable.put(name, new Variable(((Identifier) name.token).getValue(), (ArrayType) type));
+                } else {
+                    currentSymbolTable.put(name, new Variable(((Identifier) name.token).getValue(), type));
                 }
             }
         }
