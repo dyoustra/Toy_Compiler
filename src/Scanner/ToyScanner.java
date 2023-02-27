@@ -1,4 +1,4 @@
-// Danny Youstra
+package Scanner;// Danny Youstra
 // Compilers
 // Homework #4
 // 10/24/22
@@ -676,8 +676,8 @@ public class ToyScanner {
         };
     }
 
-    static int startRow = 0;
-    static int startCol = 0;
+    public static int startRow = 0;
+    public static int startCol = 0;
 
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);

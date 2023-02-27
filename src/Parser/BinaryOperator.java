@@ -1,3 +1,7 @@
+package Parser;
+
+import Scanner.Token;
+
 public class BinaryOperator extends Node {
 
     public Token token;

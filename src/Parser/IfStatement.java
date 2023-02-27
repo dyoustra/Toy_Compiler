@@ -1,3 +1,5 @@
+package Parser;
+
 public class IfStatement extends Node {
 
     public Node condition; // boolean expression

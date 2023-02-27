@@ -1,3 +1,5 @@
+package Parser;
+
 public class Variable extends Node {
 
     Node name; // name

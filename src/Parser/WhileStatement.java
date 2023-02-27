@@ -1,3 +1,5 @@
+package Parser;
+
 public class WhileStatement extends Node {
 
         public Node condition;

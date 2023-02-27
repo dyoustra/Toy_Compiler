@@ -1,3 +1,5 @@
+package Parser;
+
 public class Dot extends Node {
 
     public Literal left;

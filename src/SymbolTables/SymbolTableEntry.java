@@ -11,14 +11,18 @@ public abstract class SymbolTableEntry {
     }
 
     public static class Type {
-        public static enum Kind { INT, CHAR, BOOL, VOID}
+        public static enum Kind { INT, CHAR, BOOL, VOID }
         Kind kind;
+
+        public Type(Kind kind) {
+            this.kind = kind;
+        }
     }
 
     public static class ArrayType extends Type {
-        int size;
+        Integer size;
 
-        public ArrayType(Kind kind, int size) {
+        public ArrayType(Kind kind, Integer size) {
             super(kind);
             this.size = size;
         }

@@ -1,3 +1,5 @@
+package Parser;
+
 import java.util.ArrayList;
 
 public class Arguments extends Node {

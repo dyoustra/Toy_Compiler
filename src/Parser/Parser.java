@@ -1,10 +1,12 @@
-// Danny Youstra
+package Parser;// Danny Youstra
 // Compilers
 // Homework #4
 // 10/24/22
 
 import SymbolTables.SymbolTable;
-import SymbolTables.Variable;
+import SymbolTables.SymbolTableEntry;
+import SymbolTables.VariableSymbol;
+import Scanner.*;
 
 import java.util.ArrayList;
 import java.util.Scanner;
@@ -125,24 +127,31 @@ public class Parser {
                 if (optional(ToyScanner.State.EQUAL.name())) {
                     Node expression = expression();
                     expecting(ToyScanner.State.SEMICOLON.name());
+                    newVariableSymbol(type, name);
                     return new VariableDeclaration(type, name, expression);
                 } else {
+                    newVariableSymbol(type, name);
                     return new VariableDeclaration(type, name); // variable declared but not initialized
-                }
-                // put new variable in symbol table
-                if (type instanceof ArrayType) {
-                    currentSymbolTable.put(name, new Variable(((Identifier) name.token).getValue(), (ArrayType) type));
-                } else {
-                    currentSymbolTable.put(name, new Variable(((Identifier) name.token).getValue(), type));
                 }
             }
         }
         return null;
     }
 
+    private void newVariableSymbol(Node type, Literal name) {
+        String STName = ((Identifier) name.token).getValue();
+        if (type instanceof ArrayType arrayType) {
+            SymbolTableEntry.Type STType = new SymbolTableEntry.ArrayType(SymbolTableEntry.Type.Kind.valueOf(arrayType.baseType.token.getType()), arrayType.evaluateSize()); // TODO: size isn't an int...
+            currentSymbolTable.put(STName, new VariableSymbol(STName, STType));
+        } else if (type instanceof Type newType) {
+            SymbolTableEntry.Type STType = new SymbolTableEntry.Type(SymbolTableEntry.Type.Kind.valueOf(newType.token.getType()));
+            currentSymbolTable.put(STName, new VariableSymbol(STName, STType));
+        }
+    }
+
     private Node assignment() {
         int indexBefore = index;
-        Node variable = variable(); // TODO could increment index then return null... check
+        Node variable = variable(); // TODO could increment size then return null... check
         if (variable != null) {
             BinaryOperator assignOp = assignOp();
             if (assignOp != null) {
@@ -341,7 +350,7 @@ public class Parser {
     }
 
     private Node factor() {
-//        Node name = name();
+//        Parser.Node name = name();
 //        if (name != null) return name;
         Node primary = primary(); // checks for (expression)
         if (primary != null){
@@ -388,7 +397,6 @@ public class Parser {
         if (optional(ToyScanner.State.LPAREN.name())) { // "("
             Node expression = expression();
             expecting(ToyScanner.State.RPAREN.name()); // ")"
-            expression.parens = true;
             return expression;
         }
         return null;
@@ -404,33 +412,33 @@ public class Parser {
         return left; // can be null
     }
 
-//    private Node factorSuffix() {
-//        if (tokens.get(index).getType().equals(ToyScanner.State.LPAREN.name())) { // "("
-//            index++;
-//            int indexBefore = index;
-//            Arguments arguments = arguments();
+//    private Parser.Node factorSuffix() {
+//        if (tokens.get(size).getType().equals(Scanner.ToyScanner.State.LPAREN.name())) { // "("
+//            size++;
+//            int indexBefore = size;
+//            Parser.Arguments arguments = arguments();
 //            if (arguments.children.size() == 0) {
-//                index = indexBefore;
-//                // if true, then nothing happens but index is incremented to account for the arguments
+//                size = indexBefore;
+//                // if true, then nothing happens but size is incremented to account for the arguments
 //            }
-//            if (tokens.get(index).getType().equals(ToyScanner.State.RPAREN.name())) { // ")"
-//                index++;
+//            if (tokens.get(size).getType().equals(Scanner.ToyScanner.State.RPAREN.name())) { // ")"
+//                size++;
 //                arguments.parens = true;
 //                return arguments;
 //            } else return null;
 //        }
 //
-//        else if (tokens.get(index).getType().equals(ToyScanner.State.LBRACKET.name())) { // "["
-//            index++;
-//            Node expression = expression();
+//        else if (tokens.get(size).getType().equals(Scanner.ToyScanner.State.LBRACKET.name())) { // "["
+//            size++;
+//            Parser.Node expression = expression();
 //            if (expression != null) {
-//                if (tokens.get(index).getType().equals(ToyScanner.State.RBRACKET.name())) { // "]"
-//                    index++;
+//                if (tokens.get(size).getType().equals(Scanner.ToyScanner.State.RBRACKET.name())) { // "]"
+//                    size++;
 //                    postfixOp(); // optional
 //                    expression.brackets = true;
 //                    return expression;
 //                }
-//                throw new ErrorExpected("]", tokens.get(index));
+//                throw new ErrorExpected("]", tokens.get(size));
 //            }
 //        }
 //        return null; // can be null
@@ -442,7 +450,6 @@ public class Parser {
             if (optional(ToyScanner.State.LBRACKET.name())) { // "["
                 Node expression = expression();
                 expecting(ToyScanner.State.RBRACKET.name()); // "]"
-                expression.brackets = true;
                 return new Variable(name, expression);
             } else return new Variable(name);
         }
@@ -667,7 +674,7 @@ public class Parser {
         if (root != null) {
             System.out.println("OK");
         } else {
-//            System.out.println("ERROR" + " at row:" + ToyScanner.startRow + " col:" + parser.index);
+//            System.out.println("ERROR" + " at row:" + Scanner.ToyScanner.startRow + " col:" + parser.size);
             System.out.println("NO");
         }
 //        System.out.println("certified bruh moment");

@@ -1,4 +1,4 @@
-// Danny Youstra
+package Scanner;// Danny Youstra
 // Compilers
 // Homework #4
 // 10/24/22

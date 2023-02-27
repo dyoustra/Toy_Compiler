@@ -1,3 +1,5 @@
+package Parser;
+
 public class VariableDeclaration extends Node {
 
     public Node type;

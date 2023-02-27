@@ -1,3 +1,7 @@
+package Parser;
+
+import Scanner.Token;
+
 public class Literal extends Leaf {
 
     public Literal(Token token) {

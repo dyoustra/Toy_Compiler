@@ -2,6 +2,7 @@ package SymbolTables;
 
 import java.util.HashMap;
 
+
 public class SymbolTable {
 
     private String name;
@@ -49,14 +50,14 @@ public class SymbolTable {
     public void print() {
         System.out.println("Scope: " + (this.name == null ? "anonymous" : name));
         for (SymbolTableEntry entry : this.symbols.values()) {
-            if (entry.params != null) {
-                System.out.printf("'%4s' %s: %s",  entry.symbolType, entry.name, entry.type);
-                for (SymbolTableEntry param : entry.params) {
+            if (entry instanceof MethodSymbol method) {
+                System.out.printf("'%4s' %s: %s",  entry.getClass().getName(), entry.name, entry.type);
+                for (SymbolTableEntry param : method.params) {
                     System.out.printf("%s %s, ", param.type, param.name);
                 }
                 System.out.println();
             } else {
-                System.out.printf("'%4s' %s: %s%n", entry.symbolType, entry.name, entry.type);
+                System.out.printf("'%4s' %s: %s%n", entry.getClass().getName(), entry.name, entry.type);
             }
         }
     }
