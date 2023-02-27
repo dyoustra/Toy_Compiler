@@ -1,11 +1,11 @@
-package Parser;// Danny Youstra
+// Danny Youstra
 // Compilers
 // Homework #4
 // 10/24/22
 
-import SymbolTables.SymbolTable;
-import SymbolTables.SymbolTableEntry;
-import SymbolTables.VariableSymbol;
+package Parser;
+
+import SymbolTables.*;
 import Scanner.*;
 
 import java.util.ArrayList;
@@ -118,9 +118,10 @@ public class Parser {
                 if (type instanceof ArrayType) {
                     throw new RuntimeException("Cannot declare a method with an array type");
                 }
-                ArrayList<Node> parameters = parameters(); // can be null
+                ArrayList<VariableDeclaration> parameters = parameters(); // can be null
                 expecting(ToyScanner.State.RPAREN.name());
                 Node body = block(((Identifier) name.token).getValue());
+                newMethodSymbol((Type) type, name, parameters);
                 return new MethodDeclaration(type, name, parameters, body);
             }
             else { // variable declaration
@@ -136,17 +137,6 @@ public class Parser {
             }
         }
         return null;
-    }
-
-    private void newVariableSymbol(Node type, Literal name) {
-        String STName = ((Identifier) name.token).getValue();
-        if (type instanceof ArrayType arrayType) {
-            SymbolTableEntry.Type STType = new SymbolTableEntry.ArrayType(SymbolTableEntry.Type.Kind.valueOf(arrayType.baseType.token.getType()), arrayType.evaluateSize()); // TODO: size isn't an int...
-            currentSymbolTable.put(STName, new VariableSymbol(STName, STType));
-        } else if (type instanceof Type newType) {
-            SymbolTableEntry.Type STType = new SymbolTableEntry.Type(SymbolTableEntry.Type.Kind.valueOf(newType.token.getType()));
-            currentSymbolTable.put(STName, new VariableSymbol(STName, STType));
-        }
     }
 
     private Node assignment() {
@@ -219,15 +209,15 @@ public class Parser {
         else return null;
     }
 
-    private ArrayList<Node> parameters() { // there is no parametersPrime
-        ArrayList<Node> parameters = new ArrayList<>();
+    private ArrayList<VariableDeclaration> parameters() { // there is no parametersPrime
+        ArrayList<VariableDeclaration> parameters = new ArrayList<>();
         do {
             parameters.add(parameter());
         } while (optional(ToyScanner.State.COMMA.name()));
         return parameters;
     }
 
-    private Node parameter() {
+    private VariableDeclaration parameter() {
         Node type = parameterType();
         if (type != null) {
             Literal name = new Literal(expecting(Token.TokenType.IDENTIFIER.name()));
@@ -625,6 +615,37 @@ public class Parser {
             return dot;
         }
         return left;
+    }
+
+    // SYMBOL TABLE ENTRY METHODS
+
+    private void newMethodSymbol(Type type, Literal name, ArrayList<VariableDeclaration> parameters) {
+        String stName = ((Identifier) name.token).getValue();
+        SymbolTableEntry.Type stType = new SymbolTableEntry.Type(SymbolTableEntry.Type.Kind.valueOf(type.token.getType()));
+        ParameterSymbol[] parameterSymbols = new ParameterSymbol[parameters.size()];
+        for (int i = 0; i < parameters.size(); i++) {
+            VariableDeclaration parameter = parameters.get(i);
+            String paramName = ((Identifier) parameter.name.token).getValue();
+            SymbolTableEntry.Type paramType;
+            if (parameter.type instanceof ArrayType arrayType) {
+                paramType = new SymbolTableEntry.ArrayType(SymbolTableEntry.Type.Kind.valueOf((arrayType.baseType).token.getType()), arrayType.evaluateSize());
+            } else {
+                paramType = new SymbolTableEntry.Type(SymbolTableEntry.Type.Kind.valueOf(((Type) parameter.type).token.getType()));
+            }
+            parameterSymbols[i] = new ParameterSymbol(paramName, paramType);
+        }
+        currentSymbolTable.put(stName, new MethodSymbol(stName, stType, parameterSymbols));
+    }
+
+    private void newVariableSymbol(Node type, Literal name) {
+        String stName = ((Identifier) name.token).getValue();
+        if (type instanceof ArrayType arrayType) {
+            SymbolTableEntry.Type stType = new SymbolTableEntry.ArrayType(SymbolTableEntry.Type.Kind.valueOf(arrayType.baseType.token.getType()), arrayType.evaluateSize()); // TODO: size isn't an int...
+            currentSymbolTable.put(stName, new VariableSymbol(stName, stType));
+        } else if (type instanceof Type newType) {
+            SymbolTableEntry.Type stType = new SymbolTableEntry.Type(SymbolTableEntry.Type.Kind.valueOf(newType.token.getType()));
+            currentSymbolTable.put(stName, new VariableSymbol(stName, stType));
+        }
     }
 
     // EXCEPTION METHODS

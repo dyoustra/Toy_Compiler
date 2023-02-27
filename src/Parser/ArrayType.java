@@ -1,5 +1,7 @@
 package Parser;
 
+import Scanner.NumericLiteral;
+
 public class ArrayType extends Node {
 
     public Type baseType;
@@ -11,6 +13,13 @@ public class ArrayType extends Node {
     }
 
     public int evaluateSize() {
-        return 10; // TODO need to evaluate the size as an int
+        // Paige: for now, we are going to assume that the size is a integer literal. later, if time, we can actually evaluate the constant expression
+        try {
+            return ((NumericLiteral) ((Literal) this.size).token).getValue();
+        } catch (Exception e) {
+            System.out.println("Error: Array size must be an integer literal");
+            System.exit(1);
+        }
+        return 0;
     }
 }
