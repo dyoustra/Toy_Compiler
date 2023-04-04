@@ -7,16 +7,13 @@ public class IfStatement extends Node {
     public Node elseBody; // optional statement
 
     public IfStatement(Node condition, Node body, Node elseBody) {
+        super(Kind.IF_STATEMENT);
         this.condition = condition;
         this.body = body;
         this.elseBody = elseBody;
     }
 
-    public IfStatement(Node condition, Node body) {
-        this.condition = condition;
-        this.body = body;
-    }
-
+    @Override
     public String toString() {
         if (elseBody != null) {
             return "if (" + condition + ") " + body + " else " + elseBody;

@@ -1,23 +1,25 @@
-package Scanner;// Danny Youstra
+// Danny Youstra
 // Compilers
 // Homework #4
 // 10/24/22
+
+package Scanner;
 
 public class CharacterLiteral extends Token {
 
     private final char value;
 
     public CharacterLiteral(char value, int row, int column) {
-        super(TokenType.STRING.name(), row, column);
+        super(TokenType.STRING, row, column);
         this.value = value;
     }
 
-    public char getValue() {
+    public char getCharValue() {
         return value;
     }
 
     @Override
-    public String valueString() {
-        return ": " + value;
+    public String getValue() {
+        return Character.toString(value);
     }
 }

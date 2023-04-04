@@ -9,27 +9,20 @@ import SymbolTables.*;
 import Scanner.*;
 
 import java.util.ArrayList;
-import java.util.Scanner;
 
 public class Parser {
 
-    private static class TokenArrayList {
-        private ArrayList<Token> tokens;
-
-        public TokenArrayList(ArrayList<Token> tokens) {
-            this.tokens = tokens;
-        }
-
+    private record TokenArrayList(ArrayList<Token> tokens) {
         public Token get(int index) {
             if (index < tokens.size()) {
                 return tokens.get(index);
             } else {
-                return new Token("NULL", -1, -1);
+                return new ErrorToken(-1, -1);
             }
         }
     }
 
-    private TokenArrayList tokens;
+    private final TokenArrayList tokens;
     private int index;
 
     private SymbolTable currentSymbolTable;
@@ -39,9 +32,17 @@ public class Parser {
         this.index = 0;
     }
 
+    public SymbolTable getSymbolTable() {
+        return currentSymbolTable;
+    }
+
+    public Node parse() {
+        return program();
+    }
+
     private Node program() { // good
-        expecting(Token.Keywords.PROGRAM.name());
-        Identifier name = (Identifier) expecting(Token.TokenType.IDENTIFIER.name());
+        expecting(KeywordToken.Keyword.PROGRAM.name());
+        Identifier name = (Identifier) expectingType(Token.TokenType.IDENTIFIER);
         return block(name.getValue());
     }
 
@@ -54,9 +55,9 @@ public class Parser {
                 currentSymbolTable = new SymbolTable(name, currentSymbolTable);
             }
             ArrayList<Node> statements = statements();
-            expecting(ToyScanner.State.RBRACE.name()); // good
+            expecting(ToyScanner.State.RBRACE.name());
             currentSymbolTable.print();
-            currentSymbolTable = currentSymbolTable.getParent();
+            currentSymbolTable = currentSymbolTable.getParent(); // will return self if null
             return new Block(statements);
         }
         return null;
@@ -113,14 +114,14 @@ public class Parser {
     private Node declaration() { // good
         Node type = variableType();
         if (type != null) {
-            Literal name = new Literal(expecting(Token.TokenType.IDENTIFIER.name()));
+            Literal name = new Literal(expectingType(Token.TokenType.IDENTIFIER));
             if (optional(ToyScanner.State.LPAREN.name())) { // method declaration
                 if (type instanceof ArrayType) {
                     throw new RuntimeException("Cannot declare a method with an array type");
                 }
                 ArrayList<VariableDeclaration> parameters = parameters(); // can be null
                 expecting(ToyScanner.State.RPAREN.name());
-                Node body = block(((Identifier) name.token).getValue());
+                Node body = block(name.token.getValue());
                 newMethodSymbol((Type) type, name, parameters);
                 return new MethodDeclaration(type, name, parameters, body);
             }
@@ -156,21 +157,21 @@ public class Parser {
     }
 
     private Node ifStatement() { // good
-        if (optional(Token.Keywords.IF.name())) {
+        if (optional(KeywordToken.Keyword.IF.name())) {
             expecting(ToyScanner.State.LPAREN.name());
             Node condition = booleanExpression();
             expecting(ToyScanner.State.RPAREN.name());
             Node statement = statement();
-            if (optional(Token.Keywords.ELSE.name())) {
+            if (optional(KeywordToken.Keyword.ELSE.name())) {
                 Node elseStatement = statement();
                 return new IfStatement(condition, statement, elseStatement);
-            } else return new IfStatement(condition, statement);
+            } else return new IfStatement(condition, statement, null);
         }
         else return null;
     }
 
     private Node whileStatement() { // good
-        if (optional(Token.Keywords.WHILE.name())) {
+        if (optional(KeywordToken.Keyword.WHILE.name())) {
             expecting(ToyScanner.State.LPAREN.name());
             Node condition = booleanExpression();
             expecting(ToyScanner.State.RPAREN.name());
@@ -181,7 +182,7 @@ public class Parser {
     }
 
     private Node returnStatement() {
-        if (optional(Token.Keywords.RETURN.name())) {
+        if (optional(KeywordToken.Keyword.RETURN.name())) {
             Node expression = expression(); // can be null for empty return statement
             expecting(ToyScanner.State.SEMICOLON.name());
             return new ReturnStatement(expression);
@@ -220,7 +221,7 @@ public class Parser {
     private VariableDeclaration parameter() {
         Node type = parameterType();
         if (type != null) {
-            Literal name = new Literal(expecting(Token.TokenType.IDENTIFIER.name()));
+            Literal name = new Literal(expectingType(Token.TokenType.IDENTIFIER));
             return new VariableDeclaration(type, name);
         }
         return null;
@@ -237,10 +238,10 @@ public class Parser {
     }
 
     private Type scalarType() {
-        if (optional(Token.Keywords.INT.name()) ||
-            optional(Token.Keywords.CHAR.name()) ||
-            optional(Token.Keywords.BOOLEAN.name()) ||
-            optional(Token.Keywords.VOID.name())
+        if (optional(KeywordToken.Keyword.INT.name()) ||
+            optional(KeywordToken.Keyword.CHAR.name()) ||
+            optional(KeywordToken.Keyword.BOOLEAN.name()) ||
+            optional(KeywordToken.Keyword.VOID.name())
         ) {
             return new Type(tokens.get(index - 1));
         }
@@ -273,7 +274,7 @@ public class Parser {
     }
 
     private Node expressionPrime(Node left) {
-        if (tokens.get(index).getType().equals(ToyScanner.State.EQUAL.name())) { // "="
+        if (tokens.get(index).getValue().equals(ToyScanner.State.EQUAL.name())) { // "="
             return new BinaryOperator(tokens.get(index++), left, expressionPrime(disjunction()));
         }
         else return left; // can be null
@@ -402,38 +403,6 @@ public class Parser {
         return left; // can be null
     }
 
-//    private Parser.Node factorSuffix() {
-//        if (tokens.get(size).getType().equals(Scanner.ToyScanner.State.LPAREN.name())) { // "("
-//            size++;
-//            int indexBefore = size;
-//            Parser.Arguments arguments = arguments();
-//            if (arguments.children.size() == 0) {
-//                size = indexBefore;
-//                // if true, then nothing happens but size is incremented to account for the arguments
-//            }
-//            if (tokens.get(size).getType().equals(Scanner.ToyScanner.State.RPAREN.name())) { // ")"
-//                size++;
-//                arguments.parens = true;
-//                return arguments;
-//            } else return null;
-//        }
-//
-//        else if (tokens.get(size).getType().equals(Scanner.ToyScanner.State.LBRACKET.name())) { // "["
-//            size++;
-//            Parser.Node expression = expression();
-//            if (expression != null) {
-//                if (tokens.get(size).getType().equals(Scanner.ToyScanner.State.RBRACKET.name())) { // "]"
-//                    size++;
-//                    postfixOp(); // optional
-//                    expression.brackets = true;
-//                    return expression;
-//                }
-//                throw new ErrorExpected("]", tokens.get(size));
-//            }
-//        }
-//        return null; // can be null
-//    }
-
     private Node variable() {
         Node name = name();
         if (name != null) {
@@ -453,7 +422,7 @@ public class Parser {
     }
 
     private Arguments argumentsPrime(Arguments args) {
-        if (tokens.get(index).getType().equals(ToyScanner.State.COMMA.name())) { // ","
+        if (tokens.get(index).getValue().equals(ToyScanner.State.COMMA.name())) { // ","
             index++;
             args.children.add(expression()); // argument = expression
             return argumentsPrime(args);
@@ -465,29 +434,29 @@ public class Parser {
     // CHECK FOR TERMINAL METHODS -- WILL NOT INCREMENT INDEX ON FALSE
 
     private BinaryOperator compareOp() {
-        String type = tokens.get(index).getType();
-        if (type.equals(ToyScanner.State.EQUALEQUAL.name()) ||
-            type.equals(ToyScanner.State.EXCLAMATION.name()) ||
-            type.equals(ToyScanner.State.LESSTHAN.name()) ||
-            type.equals(ToyScanner.State.GREATERTHAN.name()) ||
-            type.equals(ToyScanner.State.LESSEQUAL.name()) ||
-            type.equals(ToyScanner.State.GREATEREQUAL.name())
+        String operator = tokens.get(index).getValue();
+        if (operator.equals(ToyScanner.State.EQUALEQUAL.name()) ||
+            operator.equals(ToyScanner.State.EXCLAMATION.name()) ||
+            operator.equals(ToyScanner.State.LESSTHAN.name()) ||
+            operator.equals(ToyScanner.State.GREATERTHAN.name()) ||
+            operator.equals(ToyScanner.State.LESSEQUAL.name()) ||
+            operator.equals(ToyScanner.State.GREATEREQUAL.name())
         ) { // "==", "!=", "<", ">", "<=", ">="
             return new BinaryOperator(tokens.get(index++), null, null);
         } else return null;
     }
 
     private BinaryOperator assignOp() {
-        String type = tokens.get(index).getType();
-        if (tokens.get(index).getType().equals(ToyScanner.State.EQUAL.name()) ||
-            tokens.get(index).getType().equals(ToyScanner.State.PLUSEQUAL.name()) ||
-            tokens.get(index).getType().equals(ToyScanner.State.MINUSEQUAL.name()) ||
-            tokens.get(index).getType().equals(ToyScanner.State.STAREQUAL.name()) ||
-            tokens.get(index).getType().equals(ToyScanner.State.SLASHEQUAL.name()) ||
-            tokens.get(index).getType().equals(ToyScanner.State.PERCENTEQUAL.name()) ||
-            tokens.get(index).getType().equals(ToyScanner.State.AMPERSANDEQUAL.name()) ||
-            tokens.get(index).getType().equals(ToyScanner.State.CARETEQUAL.name()) ||
-            tokens.get(index).getType().equals(ToyScanner.State.PIPEEQUAL.name())
+        String operator = tokens.get(index).getValue();
+        if (operator.equals(ToyScanner.State.EQUAL.name()) ||
+            operator.equals(ToyScanner.State.PLUSEQUAL.name()) ||
+            operator.equals(ToyScanner.State.MINUSEQUAL.name()) ||
+            operator.equals(ToyScanner.State.STAREQUAL.name()) ||
+            operator.equals(ToyScanner.State.SLASHEQUAL.name()) ||
+            operator.equals(ToyScanner.State.PERCENTEQUAL.name()) ||
+            operator.equals(ToyScanner.State.AMPERSANDEQUAL.name()) ||
+            operator.equals(ToyScanner.State.CARETEQUAL.name()) ||
+            operator.equals(ToyScanner.State.PIPEEQUAL.name())
         ) { // "=", "+=", "-=", "*=", "/=", "%=", "&=", "^=", "|="
             return new BinaryOperator(tokens.get(index++), null, null);
         }
@@ -495,14 +464,14 @@ public class Parser {
     }
 
     private UnaryOperator unaryOp() {
-        if (tokens.get(index).getType().equals(ToyScanner.State.EXCLAMATION.name())) { // "!"
+        if (tokens.get(index).getValue().equals(ToyScanner.State.EXCLAMATION.name())) { // "!"
             return new UnaryOperator(tokens.get(index++), null);
         }
         else return null;
     }
 
     private UnaryOperator prefixOp() {
-        String type = tokens.get(index).getType();
+        String type = tokens.get(index).getValue();
         if (type.equals(ToyScanner.State.PLUSPLUS.name()) ||
             type.equals(ToyScanner.State.MINUSMINUS.name())
         ) { // "++", "--"
@@ -512,9 +481,9 @@ public class Parser {
     }
 
     private UnaryOperator postfixOp() {
-        String type = tokens.get(index).getType();
+        String type = tokens.get(index).getValue();
         if (type.equals(ToyScanner.State.PLUSPLUS.name()) ||
-                type.equals(ToyScanner.State.MINUSMINUS.name())
+            type.equals(ToyScanner.State.MINUSMINUS.name())
         ) { // "++", "--"
             return new UnaryOperator(tokens.get(index++), null, false);
         }
@@ -522,7 +491,7 @@ public class Parser {
     }
 
     private BinaryOperator andOp() {
-        String type = tokens.get(index).getType();
+        String type = tokens.get(index).getValue();
         if (type.equals(ToyScanner.State.AMPERSAND.name()) ||
             type.equals(ToyScanner.State.AMPERSANDAMPERSAND.name())
         ) { // "&", "&&"
@@ -532,7 +501,7 @@ public class Parser {
     }
 
     private BinaryOperator orOp() {
-        String type = tokens.get(index).getType();
+        String type = tokens.get(index).getValue();
         if (type.equals(ToyScanner.State.PIPE.name()) ||
             type.equals(ToyScanner.State.PIPEPIPE.name()) ||
             type.equals(ToyScanner.State.CARET.name())
@@ -543,7 +512,7 @@ public class Parser {
     }
 
     private BinaryOperator mulOp() {
-        String type = tokens.get(index).getType();
+        String type = tokens.get(index).getValue();
         if (type.equals(ToyScanner.State.STAR.name()) ||
             type.equals(ToyScanner.State.SLASH.name()) ||
             type.equals(ToyScanner.State.PERCENT.name())
@@ -554,7 +523,7 @@ public class Parser {
     }
 
     private BinaryOperator addOp() {
-        String type = tokens.get(index).getType();
+        String type = tokens.get(index).getValue();
         if (type.equals(ToyScanner.State.PLUS.name()) ||
             type.equals(ToyScanner.State.MINUS.name())
         ) { // "+", "-"
@@ -564,9 +533,9 @@ public class Parser {
     }
 
     private UnaryOperator sign() {
-        String type = tokens.get(index).getType();
+        String type = tokens.get(index).getValue();
         if (type.equals(ToyScanner.State.PLUS.name()) ||
-                type.equals(ToyScanner.State.MINUS.name())
+            type.equals(ToyScanner.State.MINUS.name())
         ) { // "+", "-"
             return new UnaryOperator(tokens.get(index++), null);
         }
@@ -574,7 +543,7 @@ public class Parser {
     }
 
     private Literal number() {
-        if (tokens.get(index).getType().equals(Token.TokenType.NUMBER.name())) { // number
+        if (tokens.get(index).getType().equals(Token.TokenType.NUMBER)) { // number
             return new Literal(tokens.get(index++));
         }
         return null;
@@ -583,15 +552,15 @@ public class Parser {
     private Literal literal() {
         Literal number = number();
         if (number != null) return number;
-        String type = tokens.get(index).getType();
-        if (type.equals(Token.TokenType.STRING.name()) ||
-            type.equals(Token.TokenType.CHARACTER.name())
+        Token.TokenType type = tokens.get(index).getType();
+        if (type.equals(Token.TokenType.STRING) ||
+            type.equals(Token.TokenType.CHARACTER)
         ) { // string, character
             return new Literal(tokens.get(index++));
         }
-        else if (type.equals(Token.TokenType.IDENTIFIER.name())) { // check if it's a true | false keyword
-            if (((Identifier) tokens.get(index)).getValue().equals("true") ||
-                ((Identifier) tokens.get(index)).getValue().equals("false")) {
+        else if (type.equals(Token.TokenType.IDENTIFIER)) { // check if it's a true | false keyword
+            if (tokens.get(index).getValue().equals("true") ||
+                tokens.get(index).getValue().equals("false")) {
                 return new Literal(tokens.get(index++));
             }
         }
@@ -599,7 +568,7 @@ public class Parser {
     }
 
     private Node name() {
-        if (tokens.get(index).getType().equals(Token.TokenType.IDENTIFIER.name())) { // identifier
+        if (tokens.get(index).getType().equals(Token.TokenType.IDENTIFIER)) { // identifier
             Literal name = new Literal(tokens.get(index++));
             return namePrime(name);
         }
@@ -607,7 +576,7 @@ public class Parser {
     }
 
     private Node namePrime(Literal left) {
-        if (tokens.get(index).getType().equals(ToyScanner.State.DOT.name())) { // "."
+        if (tokens.get(index).getValue().equals(ToyScanner.State.DOT.name())) { // "."
             index++;
             Dot dot = new Dot();
             dot.left = left;
@@ -620,17 +589,17 @@ public class Parser {
     // SYMBOL TABLE ENTRY METHODS
 
     private void newMethodSymbol(Type type, Literal name, ArrayList<VariableDeclaration> parameters) {
-        String stName = ((Identifier) name.token).getValue();
-        SymbolTableEntry.Type stType = new SymbolTableEntry.Type(SymbolTableEntry.Type.Kind.valueOf(type.token.getType()));
+        String stName = name.token.getValue();
+        SymbolTableEntry.Type stType = new SymbolTableEntry.Type(SymbolTableEntry.Type.Kind.valueOf(type.token.getValue()));
         ParameterSymbol[] parameterSymbols = new ParameterSymbol[parameters.size()];
         for (int i = 0; i < parameters.size(); i++) {
             VariableDeclaration parameter = parameters.get(i);
-            String paramName = ((Identifier) parameter.name.token).getValue();
+            String paramName = parameter.name.token.getValue();
             SymbolTableEntry.Type paramType;
             if (parameter.type instanceof ArrayType arrayType) {
-                paramType = new SymbolTableEntry.ArrayType(SymbolTableEntry.Type.Kind.valueOf((arrayType.baseType).token.getType()), arrayType.evaluateSize());
+                paramType = new SymbolTableEntry.ArrayType(SymbolTableEntry.Type.Kind.valueOf((arrayType.baseType).token.getValue()), arrayType.evaluateSize());
             } else {
-                paramType = new SymbolTableEntry.Type(SymbolTableEntry.Type.Kind.valueOf(((Type) parameter.type).token.getType()));
+                paramType = new SymbolTableEntry.Type(SymbolTableEntry.Type.Kind.valueOf(((Type) parameter.type).token.getValue()));
             }
             parameterSymbols[i] = new ParameterSymbol(paramName, paramType);
         }
@@ -638,26 +607,32 @@ public class Parser {
     }
 
     private void newVariableSymbol(Node type, Literal name) {
-        String stName = ((Identifier) name.token).getValue();
+        String stName = name.token.getValue();
         if (type instanceof ArrayType arrayType) {
-            SymbolTableEntry.Type stType = new SymbolTableEntry.ArrayType(SymbolTableEntry.Type.Kind.valueOf(arrayType.baseType.token.getType()), arrayType.evaluateSize()); // TODO: size isn't an int...
+            SymbolTableEntry.Type stType = new SymbolTableEntry.ArrayType(SymbolTableEntry.Type.Kind.valueOf(arrayType.baseType.token.getValue()), arrayType.evaluateSize());
             currentSymbolTable.put(stName, new VariableSymbol(stName, stType));
         } else if (type instanceof Type newType) {
-            SymbolTableEntry.Type stType = new SymbolTableEntry.Type(SymbolTableEntry.Type.Kind.valueOf(newType.token.getType()));
+            SymbolTableEntry.Type stType = new SymbolTableEntry.Type(SymbolTableEntry.Type.Kind.valueOf(newType.token.getValue()));
             currentSymbolTable.put(stName, new VariableSymbol(stName, stType));
         }
     }
 
     // EXCEPTION METHODS
 
-    private Token expecting(String expected) {
+    private Token expectingType(Token.TokenType expected) {
         if (tokens.get(index).getType().equals(expected)) {
+            return tokens.get(index++);
+        } else throw new ErrorExpected(expected.name(), tokens.get(index));
+    }
+
+    private Token expecting(String expected) {
+        if (tokens.get(index).getValue().equals(expected)) {
             return tokens.get(index++);
         } else throw new ErrorExpected(expected, tokens.get(index));
     }
 
     private boolean optional(String optional) {
-        if (tokens.get(index).getType().equals(optional)) {
+        if (tokens.get(index).getValue().equals(optional)) {
             index++;
             return true;
         }
@@ -668,36 +643,5 @@ public class Parser {
         public ErrorExpected(String expected, Token found) {
             super("Expected \"" + expected + "\" @ line " + (found.getRow() + 1) + ", column " + (found.getCol() + 1) + ", found " + found);
         }
-    }
-
-    // MAIN
-
-    public static void main(String[] args) {
-        Scanner scanner = new Scanner(System.in);
-//        System.out.println("Enter program: ");
-//        if (scanner.hasNextLine()) System.out.println();
-        Token token = null;
-        ArrayList<Token> tokens = new ArrayList<>();
-        while (scanner.hasNextLine()) {
-            String current = scanner.nextLine();
-            while (ToyScanner.startCol < current.length()) {
-                token = ToyScanner.getNextToken(current.substring(ToyScanner.startCol));
-                if (token != null) tokens.add(token);
-            }
-            ToyScanner.startCol = 0;
-            ToyScanner.startRow++;
-//            System.out.println(tokens.size());
-//            System.out.println(tokens.get(tokens.size() - 1));
-        }
-        System.out.println("done scanning");
-        Parser parser = new Parser(tokens);
-        Node root = parser.program();
-        if (root != null) {
-            System.out.println("OK");
-        } else {
-//            System.out.println("ERROR" + " at row:" + Scanner.ToyScanner.startRow + " col:" + parser.size);
-            System.out.println("NO");
-        }
-//        System.out.println("certified bruh moment");
     }
 }

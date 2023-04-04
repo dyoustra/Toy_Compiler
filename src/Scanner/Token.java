@@ -1,38 +1,26 @@
-package Scanner;// Danny Youstra
+// Danny Youstra
 // Compilers
 // Homework #4
 // 10/24/22
 
-public class Token {
+package Scanner;
+public abstract class Token {
 
     public enum TokenType {
-        CHARACTER, NUMBER, STRING, IDENTIFIER, OPERATOR
+        CHARACTER, NUMBER, STRING, IDENTIFIER, SYMBOL, KEYWORD, ERROR, EOF
     }
-
-    public enum Keywords {
-        PROGRAM,
-        IF,
-        ELSE,
-        WHILE,
-        RETURN,
-        INT,
-        CHAR,
-        BOOLEAN,
-        VOID
-    }
-
-    private final String type;
+    private final TokenType type;
 
     private final int row;
     private final int col;
 
-    public Token(String type, int row, int col) {
+    public Token(TokenType type, int row, int col) {
         this.type = type;
         this.row = row;
         this.col = col;
     }
 
-    public String getType() {
+    public TokenType getType() {
         return type;
     }
 
@@ -44,12 +32,10 @@ public class Token {
         return col;
     }
 
-    public String valueString  () {
-        return "";
-    }
+    public abstract String getValue();
 
     @Override
     public String toString() {
-        return this.getType() + this.valueString() + " @ line: " + (this.getRow() + 1) + ", col: " + (this.getCol() + 1);
+        return this.getType() + ": " + this.getValue() + " @ line: " + (this.getRow() + 1) + ", col: " + (this.getCol() + 1);
     }
 }

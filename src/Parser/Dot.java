@@ -6,6 +6,6 @@ public class Dot extends Node {
     public Node right; // could be dot or literal
 
     public Dot() {
-
+        super(Kind.DOT);
     }
 }

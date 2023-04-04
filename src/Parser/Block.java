@@ -6,11 +6,8 @@ public class Block extends Node {
 
     public ArrayList<Node> statements;
 
-    public Block() {
-        this.statements = new ArrayList<Node>();
-    }
-
     public Block(ArrayList<Node> statements) {
+        super(Kind.BLOCK);
         this.statements = statements;
     }
 }

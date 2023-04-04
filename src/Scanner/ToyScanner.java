@@ -1,7 +1,9 @@
-package Scanner;// Danny Youstra
+// Danny Youstra
 // Compilers
 // Homework #4
 // 10/24/22
+
+package Scanner;
 
 import java.util.Scanner;
 
@@ -20,7 +22,8 @@ public class ToyScanner {
                     case '0': return ZERO;
                     case '\'': return CHAR;
                     case '\"': return STRING;
-                    // symbols
+
+                    // symbols (not all of them!)
                     case '+': return PLUS;
                     case '-': return MINUS;
                     case '*': return STAR;
@@ -44,6 +47,7 @@ public class ToyScanner {
                     case ';': return SEMICOLON;
                     case ':': return COLON;
                     case '.': return DOT;
+
                     case '\n':
                     case '\r':
                     case '\t':
@@ -202,7 +206,7 @@ public class ToyScanner {
 
         // SYMBOLS
 
-        PLUS(true, Token.TokenType.OPERATOR) {
+        PLUS(true, Token.TokenType.SYMBOL) {
             @Override
             public State next(char c) {
                 if(c == '+') return PLUSPLUS;
@@ -211,7 +215,7 @@ public class ToyScanner {
             }
         },
 
-        MINUS(true, Token.TokenType.OPERATOR) {
+        MINUS(true, Token.TokenType.SYMBOL) {
             @Override
             public State next(char c) {
                 if(c == '-') return MINUSMINUS;
@@ -220,7 +224,7 @@ public class ToyScanner {
             }
         },
 
-        EXCLAMATION(true, Token.TokenType.OPERATOR) {
+        EXCLAMATION(true, Token.TokenType.SYMBOL) {
             @Override
             public State next(char c) {
                 if(c == '=') return NOTEQUAL;
@@ -228,49 +232,49 @@ public class ToyScanner {
             }
         },
 
-        TILDE(true, Token.TokenType.OPERATOR) {
+        TILDE(true, Token.TokenType.SYMBOL) {
             @Override
             public State next(char c) {
                 return ERROR;
             }
         },
 
-        PLUSPLUS(true, Token.TokenType.OPERATOR) {
+        PLUSPLUS(true, Token.TokenType.SYMBOL) {
             @Override
             public State next(char c) {
                 return ERROR;
             }
         },
 
-        MINUSMINUS(true, Token.TokenType.OPERATOR) {
+        MINUSMINUS(true, Token.TokenType.SYMBOL) {
             @Override
             public State next(char c) {
                 return ERROR;
             }
         },
 
-        PLUSEQUAL(true, Token.TokenType.OPERATOR) {
+        PLUSEQUAL(true, Token.TokenType.SYMBOL) {
             @Override
             public State next(char c) {
                 return ERROR;
             }
         },
 
-        MINUSEQUAL(true, Token.TokenType.OPERATOR) {
+        MINUSEQUAL(true, Token.TokenType.SYMBOL) {
             @Override
             public State next(char c) {
                 return ERROR;
             }
         },
 
-        NOTEQUAL(true, Token.TokenType.OPERATOR) {
+        NOTEQUAL(true, Token.TokenType.SYMBOL) {
             @Override
             public State next(char c) {
                 return ERROR;
             }
         },
 
-        STAR(true, Token.TokenType.OPERATOR) {
+        STAR(true, Token.TokenType.SYMBOL) {
             @Override
             public State next(char c) {
                 if(c == '=') return STAREQUAL;
@@ -278,7 +282,7 @@ public class ToyScanner {
             }
         },
 
-        SLASH(true, Token.TokenType.OPERATOR) {
+        SLASH(true, Token.TokenType.SYMBOL) {
             @Override
             public State next(char c) {
                 if(c == '=') return SLASHEQUAL;
@@ -300,7 +304,7 @@ public class ToyScanner {
             }
         },
 
-        PERCENT(true, Token.TokenType.OPERATOR) {
+        PERCENT(true, Token.TokenType.SYMBOL) {
             @Override
             public State next(char c) {
                 if(c == '=') return PERCENTEQUAL;
@@ -308,7 +312,7 @@ public class ToyScanner {
             }
         },
 
-        AMPERSAND(true, Token.TokenType.OPERATOR) {
+        AMPERSAND(true, Token.TokenType.SYMBOL) {
             @Override
             public State next(char c) {
                 if(c == '&') return AMPERSANDAMPERSAND;
@@ -317,7 +321,7 @@ public class ToyScanner {
             }
         },
 
-        PIPE(true, Token.TokenType.OPERATOR) {
+        PIPE(true, Token.TokenType.SYMBOL) {
             @Override
             public State next(char c) {
                 if(c == '|') return PIPEPIPE;
@@ -326,7 +330,7 @@ public class ToyScanner {
             }
         },
 
-        CARET(true, Token.TokenType.OPERATOR) {
+        CARET(true, Token.TokenType.SYMBOL) {
             @Override
             public State next(char c) {
                 if(c == '=') return CARETEQUAL;
@@ -334,7 +338,7 @@ public class ToyScanner {
             }
         },
 
-        LESSTHAN(true, Token.TokenType.OPERATOR) {
+        LESSTHAN(true, Token.TokenType.SYMBOL) {
             @Override
             public State next(char c) {
                 if(c == '<') return LESSLESS;
@@ -343,7 +347,7 @@ public class ToyScanner {
             }
         },
 
-        GREATERTHAN(true, Token.TokenType.OPERATOR) {
+        GREATERTHAN(true, Token.TokenType.SYMBOL) {
             @Override
             public State next(char c) {
                 if(c == '>') return GREATERGREATER;
@@ -352,7 +356,7 @@ public class ToyScanner {
             }
         },
 
-        EQUAL(true, Token.TokenType.OPERATOR) {
+        EQUAL(true, Token.TokenType.SYMBOL) {
             @Override
             public State next(char c) {
                 if(c == '=') return EQUALEQUAL;
@@ -360,49 +364,49 @@ public class ToyScanner {
             }
         },
 
-        STAREQUAL(true, Token.TokenType.OPERATOR) {
+        STAREQUAL(true, Token.TokenType.SYMBOL) {
             @Override
             public State next(char c) {
                 return ERROR;
             }
         },
 
-        SLASHEQUAL(true, Token.TokenType.OPERATOR) {
+        SLASHEQUAL(true, Token.TokenType.SYMBOL) {
             @Override
             public State next(char c) {
                 return ERROR;
             }
         },
 
-        PERCENTEQUAL(true, Token.TokenType.OPERATOR) {
+        PERCENTEQUAL(true, Token.TokenType.SYMBOL) {
             @Override
             public State next(char c) {
                 return ERROR;
             }
         },
 
-        AMPERSANDEQUAL(true, Token.TokenType.OPERATOR) {
+        AMPERSANDEQUAL(true, Token.TokenType.SYMBOL) {
             @Override
             public State next(char c) {
                 return ERROR;
             }
         },
 
-        PIPEEQUAL(true, Token.TokenType.OPERATOR) {
+        PIPEEQUAL(true, Token.TokenType.SYMBOL) {
             @Override
             public State next(char c) {
                 return ERROR;
             }
         },
 
-        CARETEQUAL(true, Token.TokenType.OPERATOR) {
+        CARETEQUAL(true, Token.TokenType.SYMBOL) {
             @Override
             public State next(char c) {
                 return ERROR;
             }
         },
 
-        LESSLESS(true, Token.TokenType.OPERATOR) {
+        LESSLESS(true, Token.TokenType.SYMBOL) {
             @Override
             public State next(char c) {
                 if(c == '=') return LESSLESSEQUAL;
@@ -410,7 +414,7 @@ public class ToyScanner {
             }
         },
 
-        GREATERGREATER(true, Token.TokenType.OPERATOR) {
+        GREATERGREATER(true, Token.TokenType.SYMBOL) {
             @Override
             public State next(char c) {
                 if(c == '=') return GREATERGREATEREQUAL;
@@ -418,119 +422,119 @@ public class ToyScanner {
             }
         },
 
-        LESSEQUAL(true, Token.TokenType.OPERATOR) {
+        LESSEQUAL(true, Token.TokenType.SYMBOL) {
             @Override
             public State next(char c) {
                 return ERROR;
             }
         },
 
-        GREATEREQUAL(true, Token.TokenType.OPERATOR) {
+        GREATEREQUAL(true, Token.TokenType.SYMBOL) {
             @Override
             public State next(char c) {
                 return ERROR;
             }
         },
 
-        EQUALEQUAL(true, Token.TokenType.OPERATOR) {
+        EQUALEQUAL(true, Token.TokenType.SYMBOL) {
             @Override
             public State next(char c) {
                 return ERROR;
             }
         },
 
-        LESSLESSEQUAL(true, Token.TokenType.OPERATOR) {
+        LESSLESSEQUAL(true, Token.TokenType.SYMBOL) {
             @Override
             public State next(char c) {
                 return ERROR;
             }
         },
 
-        GREATERGREATEREQUAL(true, Token.TokenType.OPERATOR) {
+        GREATERGREATEREQUAL(true, Token.TokenType.SYMBOL) {
             @Override
             public State next(char c) {
                 return ERROR;
             }
         },
 
-        AMPERSANDAMPERSAND(true, Token.TokenType.OPERATOR) {
+        AMPERSANDAMPERSAND(true, Token.TokenType.SYMBOL) {
             @Override
             public State next(char c) {
                 return ERROR;
             }
         },
 
-        PIPEPIPE(true, Token.TokenType.OPERATOR) {
+        PIPEPIPE(true, Token.TokenType.SYMBOL) {
             @Override
             public State next(char c) {
                 return ERROR;
             }
         },
 
-        DOT(true, Token.TokenType.OPERATOR) {
+        DOT(true, Token.TokenType.SYMBOL) {
             @Override
             public State next(char c) {
                 return ERROR;
             }
         },
 
-        COMMA(true, Token.TokenType.OPERATOR) {
+        COMMA(true, Token.TokenType.SYMBOL) {
             @Override
             public State next(char c) {
                 return ERROR;
             }
         },
 
-        SEMICOLON(true, Token.TokenType.OPERATOR) {
+        SEMICOLON(true, Token.TokenType.SYMBOL) {
             @Override
             public State next(char c) {
                 return ERROR;
             }
         },
 
-        COLON(true, Token.TokenType.OPERATOR) {
+        COLON(true, Token.TokenType.SYMBOL) {
             @Override
             public State next(char c) {
                 return ERROR;
             }
         },
 
-        LBRACE(true, Token.TokenType.OPERATOR) {
+        LBRACE(true, Token.TokenType.SYMBOL) {
             @Override
             public State next(char c) {
                 return ERROR;
             }
         },
 
-        RBRACE(true, Token.TokenType.OPERATOR) {
+        RBRACE(true, Token.TokenType.SYMBOL) {
             @Override
             public State next(char c) {
                 return ERROR;
             }
         },
 
-        LBRACKET(true, Token.TokenType.OPERATOR) {
+        LBRACKET(true, Token.TokenType.SYMBOL) {
             @Override
             public State next(char c) {
                 return ERROR;
             }
         },
 
-        RBRACKET(true, Token.TokenType.OPERATOR) {
+        RBRACKET(true, Token.TokenType.SYMBOL) {
             @Override
             public State next(char c) {
                 return ERROR;
             }
         },
 
-        LPAREN(true, Token.TokenType.OPERATOR) {
+        LPAREN(true, Token.TokenType.SYMBOL) {
             @Override
             public State next(char c) {
                 return ERROR;
             }
         },
 
-        RPAREN(true, Token.TokenType.OPERATOR) {
+        RPAREN(true, Token.TokenType.SYMBOL) {
             @Override
             public State next(char c) {
                 return ERROR;
@@ -641,28 +645,29 @@ public class ToyScanner {
                 startCol = col;
             } else return null;
             if (i != string.length()) {
-                return new Token("ERROR", row, startOfTokenCol);
+                return new ErrorToken(row, startOfTokenCol);
             }
         }
 
         if (prevFinalState.type == null) return null;
         return switch (prevFinalState.type) {
             case IDENTIFIER -> switch (strValue.toString()) {
-                case "program" -> new Token(Token.Keywords.PROGRAM.name(), row, startOfTokenCol);
-                case "if" -> new Token(Token.Keywords.IF.name(), row, startOfTokenCol);
-                case "else" -> new Token(Token.Keywords.ELSE.name(), row, startOfTokenCol);
-                case "while" -> new Token(Token.Keywords.WHILE.name(), row, startOfTokenCol);
-                case "return" -> new Token(Token.Keywords.RETURN.name(), row, startOfTokenCol);
-                case "int" -> new Token(Token.Keywords.INT.name(), row, startOfTokenCol);
-                case "char" -> new Token(Token.Keywords.CHAR.name(), row, startOfTokenCol);
-                case "boolean" -> new Token(Token.Keywords.BOOLEAN.name(), row, startOfTokenCol);
-                case "void" -> new Token(Token.Keywords.VOID.name(), row, startOfTokenCol);
+                case "program" -> new KeywordToken(KeywordToken.Keyword.PROGRAM, row, startOfTokenCol);
+                case "if" -> new KeywordToken(KeywordToken.Keyword.IF, row, startOfTokenCol);
+                case "else" -> new KeywordToken(KeywordToken.Keyword.ELSE, row, startOfTokenCol);
+                case "while" -> new KeywordToken(KeywordToken.Keyword.WHILE, row, startOfTokenCol);
+                case "return" -> new KeywordToken(KeywordToken.Keyword.RETURN, row, startOfTokenCol);
+                case "int" -> new KeywordToken(KeywordToken.Keyword.INT, row, startOfTokenCol);
+                case "char" -> new KeywordToken(KeywordToken.Keyword.CHAR, row, startOfTokenCol);
+                case "boolean" -> new KeywordToken(KeywordToken.Keyword.BOOLEAN, row, startOfTokenCol);
+                case "void" -> new KeywordToken(KeywordToken.Keyword.VOID, row, startOfTokenCol);
                 default -> new Identifier(strValue.toString(), row, startOfTokenCol);
             };
             case NUMBER -> new NumericLiteral(numValue, row, startOfTokenCol);
-            case OPERATOR -> new Token(prevFinalState.name(), row, startOfTokenCol);
+            case SYMBOL -> new SymbolToken(prevFinalState.name(), row, startOfTokenCol);
             case CHARACTER -> new CharacterLiteral(charValue, row, startOfTokenCol);
             case STRING -> new StringLiteral(strValue.toString(), row, startOfTokenCol);
+            default -> throw new IllegalStateException("Unexpected value: " + prevFinalState.type);
         };
     }
 
@@ -693,7 +698,7 @@ public class ToyScanner {
             startCol = 0;
             startRow++;
         }
-        System.out.println(new Token("END_OF_FILE", startRow, startCol));
+        System.out.println(new EOFToken(startRow, startCol));
     }
 
 }

@@ -11,7 +11,7 @@ public abstract class SymbolTableEntry {
     }
 
     public static class Type {
-        public static enum Kind { INT, CHAR, BOOL, VOID }
+        public static enum Kind { INT, CHAR, BOOLEAN, VOID }
         Kind kind;
 
         public Type(Kind kind) {

@@ -5,7 +5,7 @@ import java.util.HashMap;
 
 public class SymbolTable {
 
-    private String name;
+    private final String name;
     private SymbolTable parent; // if null, root of program
     private HashMap<String, SymbolTableEntry> symbols;
 
@@ -31,7 +31,7 @@ public class SymbolTable {
         return name;
     }
     public SymbolTable getParent() {
-        return parent;
+        return parent == null ? this : parent;
     }
 
     public void setParent(SymbolTable parent) {
@@ -51,7 +51,7 @@ public class SymbolTable {
         System.out.println("Scope: " + (this.name == null ? "anonymous" : name));
         for (SymbolTableEntry entry : this.symbols.values()) {
             if (entry instanceof MethodSymbol method) {
-                System.out.printf("'%4s' %s: %s",  entry.getClass().getName(), entry.name, entry.type);
+                System.out.printf("'%4s' %s: %s%n",  entry.getClass().getName(), entry.name, entry.type);
                 for (SymbolTableEntry param : method.params) {
                     System.out.printf("%s %s, ", param.type, param.name);
                 }
