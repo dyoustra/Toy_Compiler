@@ -5,11 +5,11 @@
 
 package Scanner;
 
-public class Identifier extends Token {
+public class IdentifierToken extends Token {
 
     private final String value;
 
-    public Identifier(String value, int row, int column) {
+    public IdentifierToken(String value, int row, int column) {
         super(TokenType.IDENTIFIER, row, column);
         this.value = value;
     }

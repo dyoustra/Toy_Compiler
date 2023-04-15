@@ -42,8 +42,8 @@ public class Parser {
 
     private Node program() { // good
         expecting(KeywordToken.Keyword.PROGRAM.name());
-        Identifier name = (Identifier) expectingType(Token.TokenType.IDENTIFIER);
-        return block(name.getValue());
+        Identifier name = new Identifier(expectingIdentifier());
+        return block(name.token.getValue());
     }
 
     private Node block(String name) { // good
@@ -114,7 +114,7 @@ public class Parser {
     private Node declaration() { // good
         Node type = variableType();
         if (type != null) {
-            Literal name = new Literal(expectingType(Token.TokenType.IDENTIFIER));
+            Identifier name = new Identifier(expectingIdentifier());
             if (optional(ToyScanner.State.LPAREN.name())) { // method declaration
                 if (type instanceof ArrayType) {
                     throw new RuntimeException("Cannot declare a method with an array type");
@@ -221,7 +221,7 @@ public class Parser {
     private VariableDeclaration parameter() {
         Node type = parameterType();
         if (type != null) {
-            Literal name = new Literal(expectingType(Token.TokenType.IDENTIFIER));
+            Identifier name = new Identifier(expectingIdentifier());
             return new VariableDeclaration(type, name);
         }
         return null;
@@ -568,19 +568,19 @@ public class Parser {
     }
 
     private Node name() {
-        if (tokens.get(index).getType().equals(Token.TokenType.IDENTIFIER)) { // identifier
-            Literal name = new Literal(tokens.get(index++));
-            return namePrime(name);
+        IdentifierToken identifierToken = optionalIdentifier();
+        if (identifierToken != null) { // identifier
+            return namePrime(new Identifier(identifierToken));
         }
         return null;
     }
 
-    private Node namePrime(Literal left) {
+    private Node namePrime(Identifier left) {
         if (tokens.get(index).getValue().equals(ToyScanner.State.DOT.name())) { // "."
             index++;
             Dot dot = new Dot();
             dot.left = left;
-            dot.right = namePrime(new Literal(tokens.get(index++)));
+            dot.right = namePrime(new Identifier(optionalIdentifier()));
             return dot;
         }
         return left;
@@ -588,7 +588,7 @@ public class Parser {
 
     // SYMBOL TABLE ENTRY METHODS
 
-    private void newMethodSymbol(Type type, Literal name, ArrayList<VariableDeclaration> parameters) {
+    private void newMethodSymbol(Type type, Identifier name, ArrayList<VariableDeclaration> parameters) {
         String stName = name.token.getValue();
         SymbolTableEntry.Type stType = new SymbolTableEntry.Type(SymbolTableEntry.Type.Kind.valueOf(type.token.getValue()));
         ParameterSymbol[] parameterSymbols = new ParameterSymbol[parameters.size()];
@@ -606,7 +606,7 @@ public class Parser {
         currentSymbolTable.put(stName, new MethodSymbol(stName, stType, parameterSymbols));
     }
 
-    private void newVariableSymbol(Node type, Literal name) {
+    private void newVariableSymbol(Node type, Identifier name) {
         String stName = name.token.getValue();
         if (type instanceof ArrayType arrayType) {
             SymbolTableEntry.Type stType = new SymbolTableEntry.ArrayType(SymbolTableEntry.Type.Kind.valueOf(arrayType.baseType.token.getValue()), arrayType.evaluateSize());
@@ -619,10 +619,16 @@ public class Parser {
 
     // EXCEPTION METHODS
 
-    private Token expectingType(Token.TokenType expected) {
-        if (tokens.get(index).getType().equals(expected)) {
-            return tokens.get(index++);
-        } else throw new ErrorExpected(expected.name(), tokens.get(index));
+    private IdentifierToken expectingIdentifier() {
+        if (tokens.get(index).getType().equals(Token.TokenType.IDENTIFIER)) {
+            return (IdentifierToken) tokens.get(index++);
+        } else throw new ErrorExpected(Token.TokenType.IDENTIFIER.name(), tokens.get(index));
+    }
+
+    private IdentifierToken optionalIdentifier() {
+        if (tokens.get(index).getType().equals(Token.TokenType.IDENTIFIER)) {
+            return (IdentifierToken) tokens.get(index++);
+        } else return null;
     }
 
     private Token expecting(String expected) {

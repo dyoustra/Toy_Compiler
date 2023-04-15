@@ -2,8 +2,8 @@ package Parser;
 
 public class Dot extends Node {
 
-    public Literal left;
-    public Node right; // could be dot or literal
+    public Identifier left;
+    public Node right; // could be dot or identifier
 
     public Dot() {
         super(Kind.DOT);

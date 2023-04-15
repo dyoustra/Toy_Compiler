@@ -51,13 +51,18 @@ public class SymbolTable {
         System.out.println("Scope: " + (this.name == null ? "anonymous" : name));
         for (SymbolTableEntry entry : this.symbols.values()) {
             if (entry instanceof MethodSymbol method) {
-                System.out.printf("'%4s' %s: %s%n",  entry.getClass().getName(), entry.name, entry.type);
+                // methods can't return array types
+                System.out.printf("\t%s %s: %s%n",  entry.getClass().getName(), entry.name, entry.type.kind.name());
                 for (SymbolTableEntry param : method.params) {
                     System.out.printf("%s %s, ", param.type, param.name);
                 }
                 System.out.println();
             } else {
-                System.out.printf("'%4s' %s: %s%n", entry.getClass().getName(), entry.name, entry.type);
+                if (entry.type instanceof SymbolTableEntry.ArrayType arrayType)
+                    System.out.printf("\t%s %s: %s[%d]%n", entry.getClass().getName().split("\\.")[1], entry.name, arrayType.kind.name(), arrayType.size);
+                else {
+                    System.out.printf("\t%s %s: %s%n", entry.getClass().getName().split("\\.")[1], entry.name, entry.type.kind.name());
+                }
             }
         }
     }

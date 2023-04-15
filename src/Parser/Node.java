@@ -10,6 +10,7 @@ public abstract class Node {
         CALL_STATEMENT,
         DOT,
         IF_STATEMENT,
+        IDENTIFIER,
         LITERAL,
         METHOD_DECLARATION,
         VARIABLE_DECLARATION,

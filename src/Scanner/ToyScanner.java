@@ -661,7 +661,7 @@ public class ToyScanner {
                 case "char" -> new KeywordToken(KeywordToken.Keyword.CHAR, row, startOfTokenCol);
                 case "boolean" -> new KeywordToken(KeywordToken.Keyword.BOOLEAN, row, startOfTokenCol);
                 case "void" -> new KeywordToken(KeywordToken.Keyword.VOID, row, startOfTokenCol);
-                default -> new Identifier(strValue.toString(), row, startOfTokenCol);
+                default -> new IdentifierToken(strValue.toString(), row, startOfTokenCol);
             };
             case NUMBER -> new NumericLiteral(numValue, row, startOfTokenCol);
             case SYMBOL -> new SymbolToken(prevFinalState.name(), row, startOfTokenCol);

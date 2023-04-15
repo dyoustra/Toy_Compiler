@@ -33,8 +33,8 @@ public class Main {
             System.out.println("NO");
         }
 
-        Traverser traverser = new Traverser(root, parser.getSymbolTable());
-        traverser.annotateIdentifiers();
-        System.out.println("bruh");
+//        Traverser traverser = new Traverser(root, parser.getSymbolTable());
+//        traverser.traverseAll();
+//        System.out.println("bruh");
     }
 }

@@ -2,8 +2,8 @@ package Parser;
 
 public class Variable extends Node {
 
-    Node name; // name
-    Node index; // expression, in brackets
+    public Node name; // name
+    public Node index; // expression, in brackets
 
     public Variable(Node name, Node index) {
         super(Kind.VARIABLE);
