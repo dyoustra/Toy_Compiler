@@ -30,6 +30,7 @@ public class Parser {
     public Parser(ArrayList<Token> tokens) {
         this.tokens = new TokenArrayList(tokens);
         this.index = 0;
+        this.currentSymbolTable = SymbolTable.globalSymbolTable();
     }
 
     public SymbolTable getSymbolTable() {
@@ -51,14 +52,16 @@ public class Parser {
             // create new symbol table
             if (currentSymbolTable == null) {
                 currentSymbolTable = new SymbolTable(name, null);
+                System.err.println("Parser: this shouldn't happen");
             } else {
                 currentSymbolTable = new SymbolTable(name, currentSymbolTable);
             }
             ArrayList<Node> statements = statements();
             expecting(ToyScanner.State.RBRACE.name());
             currentSymbolTable.print();
+            Block block = new Block(statements, currentSymbolTable);
             currentSymbolTable = currentSymbolTable.getParent(); // will return self if null
-            return new Block(statements);
+            return block;
         }
         return null;
     }

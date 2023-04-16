@@ -32,9 +32,7 @@ public class Main {
 //            System.out.println("ERROR" + " at row:" + Scanner.ToyScanner.startRow + " col:" + parser.size);
             System.out.println("NO");
         }
-
-//        Traverser traverser = new Traverser(root, parser.getSymbolTable());
-//        traverser.traverseAll();
-//        System.out.println("bruh");
+        Traverser traverser = new Traverser(root, parser.getSymbolTable());
+        traverser.traverseAll();
     }
 }

@@ -31,7 +31,8 @@ public class SymbolTable {
         return name;
     }
     public SymbolTable getParent() {
-        return parent == null ? this : parent;
+        return this.parent;
+//        return parent == null ? this : parent;
     }
 
     public void setParent(SymbolTable parent) {
@@ -65,5 +66,19 @@ public class SymbolTable {
                 }
             }
         }
+    }
+
+    // the global symbol table of every program, set as the root in Parser.java
+    // Hardcoded, language-defined methods and variables go here
+    public static SymbolTable globalSymbolTable() {
+         SymbolTable symbolTable = new SymbolTable("global", null);
+         // input() method
+         ParameterSymbol[] inputParams = { new ParameterSymbol("c", new SymbolTableEntry.Type(SymbolTableEntry.Type.Kind.CHAR)) };
+         symbolTable.put("input", new MethodSymbol("input", new SymbolTableEntry.Type(SymbolTableEntry.Type.Kind.VOID), inputParams));
+         // output() method
+        ParameterSymbol[] outputParams = { new ParameterSymbol("c", new SymbolTableEntry.Type(SymbolTableEntry.Type.Kind.CHAR)) };
+        symbolTable.put("output", new MethodSymbol("output", new SymbolTableEntry.Type(SymbolTableEntry.Type.Kind.VOID), outputParams));
+
+        return symbolTable;
     }
 }

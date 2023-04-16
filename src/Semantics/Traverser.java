@@ -41,7 +41,7 @@ public class Traverser {
             case BLOCK -> {
                 Block block = (Block) current;
                 for (Node statement : block.statements) {
-                    traverse(statement, symbolTable);
+                    traverse(statement, block.symbolTable);
                 }
             }
             case CALL_STATEMENT -> {
