@@ -1,0 +1,164 @@
+Program -> PROGRAM IDENTIFIER Block
+
+Block -> '{' Statements '}'
+
+Statements -> Statement
+Statements -> Statements Statement
+
+Statement -> Declaration
+Statement -> Assignment
+Statement -> IfStatement
+Statement -> WhileStatement
+Statement -> ReturnStatement
+Statement -> CallStatement
+Statement -> Block
+
+Assignment -> Variable AssignOp Expression ';'
+
+CallStatement -> Call ';'
+
+Call -> Name '(' ')'
+Call -> Name '(' Arguments ')'
+
+Arguments -> Argument
+Arguments -> Arguments ',' Argument
+Argument  -> Expression
+
+IfStatement -> IF '(' BooleanExpression ')' Statement
+IfStatement -> IF '(' BooleanExpression ')' Statement ELSE Statement
+
+WhileStatement -> WHILE '(' BooleanExpression ')' Statement
+
+ReturnStatement -> RETURN ';'
+ReturnStatement -> RETURN Expression ';'
+
+Declaration -> VariableDeclaration ';'
+Declaration -> MethodDeclaration ';'
+
+VariableDeclaration -> VariableType IDENTIFIER
+VariableDeclaration -> VariableType IDENTIFIER '=' Expression
+
+MethodDeclaration -> ScalarType IDENTIFIER '(' ')' Block
+MethodDeclaration -> ScalarType IDENTIFIER '(' Parameters ')' Block
+
+Parameters -> Parameter
+Parameters -> Parameters ',' Parameter
+Parameter  -> ParameterType IDENTIFIER
+
+VariableType -> ScalarType
+VariableType -> ScalarType '[' ConstantExpression ']'
+
+ParameterType -> ScalarType
+ParameterType -> ScalarType '[' ']'
+
+ScalarType -> INT
+ScalarType -> CHAR
+ScalarType -> BOOLEAN
+ScalarType -> VOID
+
+BooleanExpression -> Expression
+ConstantExpression -> Expression
+
+Expression -> Assignment
+Expression -> Disjunction
+
+Disjunction -> Conjunction
+Disjunction -> Disjunction OrOp Conjunction
+
+Conjunction -> Relation
+Conjunction -> Conjunction AndOp Relation
+
+Relation -> SimpleExpression
+Relation -> SimpleExpression CompareOp SimpleExpression
+
+SimpleExpression -> Term
+SimpleExpression -> Sign Term
+SimpleExpression -> SimpleExpression AddOp Term
+
+Term -> Factor
+Term -> Term MulOp Factor
+ 
+Factor -> Primary
+Factor -> UnaryOp Factor
+Factor -> PrefixOp Variable
+Factor -> Variable PostfixOp
+
+Primary -> Call
+Primary -> Literal
+Primary -> Variable
+Primary -> '(' Expression ')'
+
+Variable -> Name
+Variable -> Name '[' Expression ']'
+
+Name -> IDENTIFIER
+Name -> Name . IDENTIFIER
+
+Literal -> Number
+Literal -> TRUE
+Literal -> FALSE
+Literal -> CHARACTER
+Literal -> STRING
+
+Number -> DECIMAL_NUMBER
+Number -> HEX_NUMBER
+
+AssignOp -> '='
+AssignOp -> '+='
+AssignOp -> '-='
+AssignOp -> '*='
+AssignOp -> '/='
+AssignOp -> '%='
+AssignOp -> '&='
+AssignOp -> '|='
+AssignOp -> '^='
+
+AndOp -> '&&'
+AndOp -> '&'
+
+OrOp -> '||'
+OrOp -> '|'
+OrOp -> '^'
+
+CompareOp -> '<'
+CompareOp -> '<='
+CompareOp -> '>='
+CompareOp -> '>'
+CompareOp -> "=='
+CompareOp -> '!='
+
+Sign -> '+'
+Sign -> '-'
+
+AddOp -> '+'
+AddOp -> '-'
+
+MulOp -> '*'
+MulOp -> '/'
+MulOp -> '%'
+
+UnaryOp -> '!'
+
+PrefixOp -> '++'
+PrefixOp -> '--'
+
+PostfixOp -> '++'
+PostfixOp -> '--'
+
+TOKEN INT = int
+TOKEN CHAR = char
+TOKEN BOOL = bool
+TOKEN VOID = void
+TOKEN TRUE = true
+TOKEN FALSE = false
+TOKEN IF = if
+TOKEN ELSE = else
+TOKEN WHILE = while
+TOKEN RETURN = return
+TOKEN PROGRAM = program
+
+TOKEN IDENTIFIER = [a-zA-Z](_?[a-zA-Z-0-9])*
+TOKEN DECIMAL_NUMBER = [0-9](_? [0-9])*
+TOKEN HEX_NUMBER = 0[xX][0-9a-fA-F](_?[0-9a-fA-F])*
+TOKEN CHARACTER = [']([^'"\\\n]|[\\'\\"\\\\][\\][a-zA-Z0-9])[']
+TOKEN STRING = ["]([^'"\\\n]|[\\'\\"\\\\][\\][a-zA-Z0-9])* ["]

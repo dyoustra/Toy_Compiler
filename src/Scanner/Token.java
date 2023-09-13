@@ -7,7 +7,7 @@ package Scanner;
 public abstract class Token {
 
     public enum TokenType {
-        CHARACTER, NUMBER, STRING, IDENTIFIER, SYMBOL, KEYWORD, ERROR, EOF
+        CHAR, INT, STRING, IDENTIFIER, SYMBOL, KEYWORD, ERROR, EOF
     }
     private final TokenType type;
 

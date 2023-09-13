@@ -376,7 +376,7 @@ public class Parser {
         Node variable = variable();
         if (variable != null) {
             if (optional(ToyScanner.State.LPAREN.name())) { // "("
-                index = initialIndex; // needed because both variable and callstatement start with name
+                index = initialIndex; // needed because both variable and callStatement start with name
             }
             else {
                 UnaryOperator postfix = postfixOp();
@@ -439,7 +439,7 @@ public class Parser {
     private BinaryOperator compareOp() {
         String operator = tokens.get(index).getValue();
         if (operator.equals(ToyScanner.State.EQUALEQUAL.name()) ||
-            operator.equals(ToyScanner.State.EXCLAMATION.name()) ||
+            operator.equals(ToyScanner.State.NOTEQUAL.name()) ||
             operator.equals(ToyScanner.State.LESSTHAN.name()) ||
             operator.equals(ToyScanner.State.GREATERTHAN.name()) ||
             operator.equals(ToyScanner.State.LESSEQUAL.name()) ||
@@ -546,7 +546,7 @@ public class Parser {
     }
 
     private Literal number() {
-        if (tokens.get(index).getType().equals(Token.TokenType.NUMBER)) { // number
+        if (tokens.get(index).getType().equals(Token.TokenType.INT)) { // number
             return new Literal(tokens.get(index++));
         }
         return null;
@@ -557,7 +557,7 @@ public class Parser {
         if (number != null) return number;
         Token.TokenType type = tokens.get(index).getType();
         if (type.equals(Token.TokenType.STRING) ||
-            type.equals(Token.TokenType.CHARACTER)
+            type.equals(Token.TokenType.CHAR)
         ) { // string, character
             return new Literal(tokens.get(index++));
         }
@@ -593,18 +593,15 @@ public class Parser {
 
     private void newMethodSymbol(Type type, Identifier name, ArrayList<VariableDeclaration> parameters) {
         String stName = name.token.getValue();
-        SymbolTableEntry.Type stType = new SymbolTableEntry.Type(SymbolTableEntry.Type.Kind.valueOf(type.token.getValue()));
+        SymbolTableEntry.Type stType = SymbolTableEntry.Type.valueOf(type.token.getValue());
         ParameterSymbol[] parameterSymbols = new ParameterSymbol[parameters.size()];
         for (int i = 0; i < parameters.size(); i++) {
             VariableDeclaration parameter = parameters.get(i);
-            String paramName = parameter.name.token.getValue();
-            SymbolTableEntry.Type paramType;
-            if (parameter.type instanceof ArrayType arrayType) {
-                paramType = new SymbolTableEntry.ArrayType(SymbolTableEntry.Type.Kind.valueOf((arrayType.baseType).token.getValue()), arrayType.evaluateSize());
+            if (parameter.varType instanceof ArrayType arrayType) {
+                parameterSymbols[i] = new ParameterSymbol(stName, SymbolTableEntry.Type.valueOf(arrayType.baseType.token.getValue()), arrayType.evaluateSize());
             } else {
-                paramType = new SymbolTableEntry.Type(SymbolTableEntry.Type.Kind.valueOf(((Type) parameter.type).token.getValue()));
+                parameterSymbols[i] = new ParameterSymbol(stName, SymbolTableEntry.Type.valueOf(((Type) parameter.varType).token.getValue()));
             }
-            parameterSymbols[i] = new ParameterSymbol(paramName, paramType);
         }
         currentSymbolTable.put(stName, new MethodSymbol(stName, stType, parameterSymbols));
     }
@@ -612,11 +609,9 @@ public class Parser {
     private void newVariableSymbol(Node type, Identifier name) {
         String stName = name.token.getValue();
         if (type instanceof ArrayType arrayType) {
-            SymbolTableEntry.Type stType = new SymbolTableEntry.ArrayType(SymbolTableEntry.Type.Kind.valueOf(arrayType.baseType.token.getValue()), arrayType.evaluateSize());
-            currentSymbolTable.put(stName, new VariableSymbol(stName, stType));
+            currentSymbolTable.put(stName, new VariableSymbol(stName, SymbolTableEntry.Type.valueOf(arrayType.baseType.token.getValue()), arrayType.evaluateSize()));
         } else if (type instanceof Type newType) {
-            SymbolTableEntry.Type stType = new SymbolTableEntry.Type(SymbolTableEntry.Type.Kind.valueOf(newType.token.getValue()));
-            currentSymbolTable.put(stName, new VariableSymbol(stName, stType));
+            currentSymbolTable.put(stName, new VariableSymbol(stName, SymbolTableEntry.Type.valueOf(newType.token.getValue())));
         }
     }
 

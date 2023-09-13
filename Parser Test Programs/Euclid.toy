@@ -1,0 +1,44 @@
+program Euclid {
+
+	// This program implements the Euclidean Algorithm to compute
+	// the greatest common divisor of two numbers.  It requires
+	// only divide, mod and not equal operators (and character
+	// addition if you implement output).  There are no method
+	// calls; only simple assignment statements, a while loop,
+	// and either and possibly a return statement (or implement
+	// output).  If you want, you can place all of the variables
+	// in fixed memory locations and not worry about frame layout.
+
+	int n = 8;
+    int m = 26;
+	// int r; // Declare r here if necessary
+
+	while (m != 0) {
+	    int r = n % m;
+		n = m;
+		m = r;
+	}
+
+	// Get the digits of the answer
+
+	int d1 = n % 10;
+	int d2 = (n / 10) % 10;
+	int d3 = (n / 100) % 10;
+
+	// Print each digit and a newline
+
+	output('0' + d3);
+	output('0' + d2);
+	output('0' + d1);
+	output('\n');
+
+	// Alternative (if you don't want to implement output):
+	//    Allow a return statement here (as shown below)
+	//    The result register is always R0 ... so you can
+	//    have the Tiny simulator dump the registers when
+	//    your program halts and then look at the registers
+	//    in the register dump to see if R0 contains the
+	//    correct answer`
+
+	// return n;  // Alternative to output
+}

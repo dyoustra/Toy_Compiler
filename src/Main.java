@@ -1,16 +1,18 @@
+import CodeGeneration.ToyGenerator;
 import Scanner.*;
 import Parser.*;
-import Semantics.Traverser;
+import Semantics.*;
 
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Scanner;
 import java.io.File;
 
 public class Main {
 
-    public static void main(String[] args) throws FileNotFoundException {
-        File file = new File("Parser Test Programs\\echo.toy");
+    public static void main(String[] args) throws IOException {
+        File file = new File("Parser Test Programs\\Euclid.toy");
         Scanner scanner = new Scanner(file);
         Token token;
         ArrayList<Token> tokens = new ArrayList<>();
@@ -34,5 +36,12 @@ public class Main {
         }
         Traverser traverser = new Traverser(root, parser.getSymbolTable());
         traverser.traverseAll();
+        System.out.println("done traversing");
+
+
+        // wont work, as Strings are not implemented
+//        ToyGenerator.testBuild(root, parser.getSymbolTable());
+
+        ToyGenerator.build(root, parser.getSymbolTable());
     }
 }

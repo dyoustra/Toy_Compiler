@@ -1,5 +1,6 @@
 package Parser;
 
+import SymbolTables.SymbolTableEntry;
 public abstract class Node {
     // no token variable, as things like arguments don't have tokens
     public enum Kind {
@@ -22,6 +23,7 @@ public abstract class Node {
     }
 
     public Kind kind;
+    public SymbolTableEntry.Type type;
     public Node(Kind kind) {
         this.kind = kind;
     }

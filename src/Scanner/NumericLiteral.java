@@ -10,7 +10,7 @@ public class NumericLiteral extends Token {
     private final int value;
 
     public NumericLiteral(int value, int row, int column) {
-        super(TokenType.NUMBER, row, column);
+        super(TokenType.INT, row, column);
         this.value = value;
     }
 

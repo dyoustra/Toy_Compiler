@@ -6,7 +6,7 @@ import java.util.HashMap;
 public class SymbolTable {
 
     private final String name;
-    private SymbolTable parent; // if null, root of program
+    private SymbolTable parent;
     private HashMap<String, SymbolTableEntry> symbols;
 
     public SymbolTable(String name, SymbolTable parent) {
@@ -32,7 +32,6 @@ public class SymbolTable {
     }
     public SymbolTable getParent() {
         return this.parent;
-//        return parent == null ? this : parent;
     }
 
     public void setParent(SymbolTable parent) {
@@ -53,16 +52,16 @@ public class SymbolTable {
         for (SymbolTableEntry entry : this.symbols.values()) {
             if (entry instanceof MethodSymbol method) {
                 // methods can't return array types
-                System.out.printf("\t%s %s: %s%n",  entry.getClass().getName(), entry.name, entry.type.kind.name());
+                System.out.printf("\t%s %s: %s%n",  entry.getClass().getName(), entry.name, entry.type);
                 for (SymbolTableEntry param : method.params) {
                     System.out.printf("%s %s, ", param.type, param.name);
                 }
                 System.out.println();
             } else {
-                if (entry.type instanceof SymbolTableEntry.ArrayType arrayType)
-                    System.out.printf("\t%s %s: %s[%d]%n", entry.getClass().getName().split("\\.")[1], entry.name, arrayType.kind.name(), arrayType.size);
+                if (entry.type.isArray())
+                    System.out.printf("\t%s %s: %s[%d]%n", entry.getClass().getName().split("\\.")[1], entry.name, entry.type, entry.arraySize);
                 else {
-                    System.out.printf("\t%s %s: %s%n", entry.getClass().getName().split("\\.")[1], entry.name, entry.type.kind.name());
+                    System.out.printf("\t%s %s: %s%n", entry.getClass().getName().split("\\.")[1], entry.name, entry.type);
                 }
             }
         }
@@ -72,12 +71,16 @@ public class SymbolTable {
     // Hardcoded, language-defined methods and variables go here
     public static SymbolTable globalSymbolTable() {
          SymbolTable symbolTable = new SymbolTable("global", null);
-         // input() method
-         ParameterSymbol[] inputParams = { new ParameterSymbol("c", new SymbolTableEntry.Type(SymbolTableEntry.Type.Kind.CHAR)) };
-         symbolTable.put("input", new MethodSymbol("input", new SymbolTableEntry.Type(SymbolTableEntry.Type.Kind.VOID), inputParams));
-         // output() method
-        ParameterSymbol[] outputParams = { new ParameterSymbol("c", new SymbolTableEntry.Type(SymbolTableEntry.Type.Kind.CHAR)) };
-        symbolTable.put("output", new MethodSymbol("output", new SymbolTableEntry.Type(SymbolTableEntry.Type.Kind.VOID), outputParams));
+         // input(char c) method
+         ParameterSymbol[] inputParams = { new ParameterSymbol("c", SymbolTableEntry.Type.CHAR) };
+         symbolTable.put("input", new MethodSymbol("input", SymbolTableEntry.Type.VOID, inputParams));
+         // output(char c) method
+        ParameterSymbol[] outputParams = { new ParameterSymbol("c", SymbolTableEntry.Type.CHAR) };
+        symbolTable.put("output", new MethodSymbol("output", SymbolTableEntry.Type.VOID, outputParams));
+        // true
+        symbolTable.put("true", new VariableSymbol("true", SymbolTableEntry.Type.BOOLEAN));
+        // false
+        symbolTable.put("false", new VariableSymbol("false", SymbolTableEntry.Type.BOOLEAN));
 
         return symbolTable;
     }

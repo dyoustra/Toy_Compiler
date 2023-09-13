@@ -2,7 +2,7 @@ package Parser;
 
 public class CallStatement extends Node {
 
-        public Node function;
+        public Node function; // Dot or Identifier
         public Arguments arguments;
 
         public CallStatement(Node function, Arguments arguments) {

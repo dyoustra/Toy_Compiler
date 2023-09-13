@@ -2,7 +2,7 @@ package Parser;
 
 public class Variable extends Node {
 
-    public Node name; // name
+    public Node name; // identifier or dot
     public Node index; // expression, in brackets
 
     public Variable(Node name, Node index) {

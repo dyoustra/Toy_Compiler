@@ -59,7 +59,7 @@ public class ToyScanner {
 
         // INTEGER LITERALS
 
-        ZERO(true, Token.TokenType.NUMBER) {
+        ZERO(true, Token.TokenType.INT) {
             @Override
             public State next(char c) {
                 if (State.isDigit(c)) return DIGIT;
@@ -72,7 +72,7 @@ public class ToyScanner {
             }
         },
 
-        DIGIT(true, Token.TokenType.NUMBER) {
+        DIGIT(true, Token.TokenType.INT) {
             @Override
             public State next(char c) {
                 if (State.isDigit(c)) return DIGIT;
@@ -83,7 +83,7 @@ public class ToyScanner {
             }
         },
 
-        INTUNDER(false, Token.TokenType.NUMBER) {
+        INTUNDER(false, Token.TokenType.INT) {
             @Override
             public State next(char c) {
                 if (State.isDigit(c)) return DIGIT;
@@ -91,7 +91,7 @@ public class ToyScanner {
             }
         },
 
-        HEXSTART(false, Token.TokenType.NUMBER) {
+        HEXSTART(false, Token.TokenType.INT) {
             @Override
             public State next(char c) {
                 if (State.isHexChar(c)) return HEX;
@@ -99,7 +99,7 @@ public class ToyScanner {
             }
         },
 
-        HEX(true, Token.TokenType.NUMBER) {
+        HEX(true, Token.TokenType.INT) {
             @Override
             public State next (char c) {
                 if (State.isHexChar(c)) return HEX;
@@ -110,7 +110,7 @@ public class ToyScanner {
             }
         },
 
-        HEXUNDER(false, Token.TokenType.NUMBER) {
+        HEXUNDER(false, Token.TokenType.INT) {
             @Override
             public State next(char c) {
                 if (State.isHexChar(c)) return HEX;
@@ -118,9 +118,9 @@ public class ToyScanner {
             }
         },
 
-        // CHARACTER LITERALS
+        // CHAR LITERALS
 
-        CHAR(false, Token.TokenType.CHARACTER) {
+        CHAR(false, Token.TokenType.CHAR) {
             @Override
             public State next(char c) {
                 switch (c) {
@@ -130,7 +130,7 @@ public class ToyScanner {
                 }
             }
         },
-        CHARSPECIAL(false, Token.TokenType.CHARACTER) {
+        CHARSPECIAL(false, Token.TokenType.CHAR) {
             @Override
             public State next(char c) {
                 if (isSpecialCharacter(c)) return ALMOST;
@@ -138,7 +138,7 @@ public class ToyScanner {
             }
         },
 
-        ALMOST(false, Token.TokenType.CHARACTER) {
+        ALMOST(false, Token.TokenType.CHAR) {
             @Override
             public State next(char c){
                 if(c == '\'') return CHAREND;
@@ -146,7 +146,7 @@ public class ToyScanner {
             }
         },
 
-        CHAREND(true, Token.TokenType.CHARACTER) {
+        CHAREND(true, Token.TokenType.CHAR) {
             @Override
             public State next(char c){
                 return ERROR; // if there is a char after '
@@ -663,9 +663,9 @@ public class ToyScanner {
                 case "void" -> new KeywordToken(KeywordToken.Keyword.VOID, row, startOfTokenCol);
                 default -> new IdentifierToken(strValue.toString(), row, startOfTokenCol);
             };
-            case NUMBER -> new NumericLiteral(numValue, row, startOfTokenCol);
+            case INT -> new NumericLiteral(numValue, row, startOfTokenCol);
             case SYMBOL -> new SymbolToken(prevFinalState.name(), row, startOfTokenCol);
-            case CHARACTER -> new CharacterLiteral(charValue, row, startOfTokenCol);
+            case CHAR -> new CharacterLiteral(charValue, row, startOfTokenCol);
             case STRING -> new StringLiteral(strValue.toString(), row, startOfTokenCol);
             default -> throw new IllegalStateException("Unexpected value: " + prevFinalState.type);
         };
